@@ -1,0 +1,238 @@
+{
+  "main": {
+    "id": "56dceeaf0d2c50d6",
+    "type": "split",
+    "children": [
+      {
+        "id": "0e2b4401ff7fbcaf",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "8987ab508f0ba079",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Arquitetura/Pagamentos.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Pagamentos"
+            }
+          },
+          {
+            "id": "803829d3fd025c5d",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Arquitetura/STACK.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "STACK"
+            }
+          }
+        ],
+        "currentTab": 1
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "5d4991f4a6fc62fa",
+    "type": "split",
+    "children": [
+      {
+        "id": "bff647a3f5ba5c78",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "f0ecd747cf6c9959",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Explorador de arquivos"
+            }
+          },
+          {
+            "id": "fedfb2d5fbb5c4a8",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Procurar"
+            }
+          },
+          {
+            "id": "3a9dddcc649aff8e",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-bookmark",
+              "title": "Marcadores"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "2f046ea6d396abb2",
+    "type": "split",
+    "children": [
+      {
+        "id": "586c788cd183f694",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "886c410663c85a3d",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "Contextos/Sobre o projeto.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Links inversos"
+            }
+          },
+          {
+            "id": "41e28ab316ea94c9",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "Contextos/Sobre o projeto.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Links de saída"
+            }
+          },
+          {
+            "id": "1c8a403ce57cdb3b",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Etiquetas"
+            }
+          },
+          {
+            "id": "1cf7b0f1a1fcaa4b",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "Todas as propriedades"
+            }
+          },
+          {
+            "id": "6a550f5258adb083",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "Contextos/Sobre o projeto.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Sumário"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Abrir a troca rápida": false,
+      "graph:Abrir visualização em gráfico": false,
+      "canvas:Criar novo canvas": false,
+      "daily-notes:Abrir a nota de hoje": false,
+      "templates:Inserir modelo": false,
+      "command-palette:Abrir paleta de comandos": false,
+      "bases:Criar nova base": false
+    }
+  },
+  "active": "f0ecd747cf6c9959",
+  "lastOpenFiles": [
+    "Arquitetura/Rotas.md",
+    "Arquitetura/Integrações.md",
+    "Arquitetura/Pagamentos.md",
+    "Regras/designe/designe extra.md",
+    "Arquitetura/Estrutura do projeto.md",
+    "Contextos/SEO.md",
+    "Contextos/LGPD e Conformidade Legal.md",
+    "Contextos/Regras de Negócio -  Norte Tecnologia.md",
+    "Arquitetura/STACK.md",
+    "Arquitetura/Segurança.md",
+    "Contextos/Claude.md",
+    "Contextos/Diário.md",
+    "Contextos/Sobre o projeto - Norte Tecnologia.md",
+    "Regras/GitHub - commit, push, PR, deploy.md",
+    "Regras/designe/designe.md",
+    "Regras/designe/imagens base/Pasted image 20261029161923.png",
+    "Regras/designe/imagens base/Pasted image 20261029161736.png",
+    "Regras/designe/imagens base/Pasted image 20261029161649.png",
+    "Regras/designe/imagens base/Pasted image 20261029161621.png",
+    "Regras/designe/imagens base/Pasted image 20261029161552.png",
+    "Regras/designe/imagens base/Pasted image 20261029161351.png",
+    "Regras/designe/imagens base",
+    "Regras/designe",
+    "Arquitetura",
+    "Contextos",
+    "Regras",
+    "Sem título.canvas",
+    "STACK",
+    "src"
+  ]
+}
