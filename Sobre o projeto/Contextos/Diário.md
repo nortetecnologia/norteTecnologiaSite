@@ -8,23 +8,45 @@
 
 ## 1. Estado atual do projeto
 
-- **Estágio:** Admin completo + Páginas públicas + Carrinho localStorage + Checkout WhatsApp + Formas de pagamento configuráveis + Rota subcategoria. Fluxo de compra completo implementado.
-- **Última atividade:** 2026-11-04 — Sprint Formas de Pagamento Dinâmicas + Rota Subcategoria.
-- **Situação geral:** Deploy funcional na Vercel. **Pendente:** aplicar todas as migrations (001–006) no Supabase SQL Editor em ordem. Após isso: configurar WhatsApp e horários, formas de pagamento, criar categorias/subcategorias, cadastrar produtos, montar vitrines.
-- **Próxima etapa:** Usuário aplica migrations → configura loja → testar fluxo completo. Depois: Cloudinary upload, importação XML do CRM, relatórios.
+- **Estágio:** Admin completo (incluindo Relatórios com dados reais) + Páginas públicas completas + Carrinho + Checkout + Formas de pagamento configuráveis. Todas as rotas documentadas em `Rotas.md` implementadas.
+- **Última atividade:** 2026-11-04 — Sprint Relatórios (`/admin/relatorios`).
+- **Situação geral:** Deploy funcional na Vercel. **Pendente:** aplicar migrations (001–006) no Supabase SQL Editor em ordem. Após isso: configurar loja, criar categorias, cadastrar produtos, montar vitrines.
+- **Próxima etapa:** Usuário aplica migrations → configura loja → testa fluxo completo. Depois: Cloudinary upload para imagens, importação XML do CRM (aguarda arquivo de exemplo).
 
 ---
 
 ## 2. Última atualização
 
 - **Data:** 2026-11-04
-- **Atividade:** Formas de pagamento configuráveis via admin + Rota `/categoria/[slug]/[subcategoria]`.
-- **Resultado:** Formas de pagamento saíram do hardcode para o banco (`store_settings.payment_methods TEXT[]`). Admin pode gerenciar via `/admin/configuracoes`. Checkout carrega do banco. Rota subcategoria criada seguindo padrão da categoria. Build passou (15 páginas, tsc OK, lint OK).
-- **Situação:** Todas as rotas públicas documentadas em `Rotas.md` implementadas. Pagamentos configuráveis dinamicamente.
+- **Atividade:** Página `/admin/relatorios` — substituiu stub estático por dados reais do banco.
+- **Resultado:** Relatórios exibem: 4 cards de resumo (total produtos, ativos, categorias, vitrines ativas), alertas de estoque (sem estoque e baixo ≤5), tabela de catálogo por categoria (total/ativos/sem estoque), status das vitrines, lista de produtos ativos sem imagem. Build passou (15 páginas, tsc OK, lint OK).
+- **Situação:** Todos os módulos admin documentados em `Rotas.md` implementados com dados reais.
 
 ---
 
 ## 3. Implementações concluídas
+
+### 2026-11-04 — Relatórios (`/admin/relatorios`)
+
+- **Objetivo:** Substituir o stub estático de relatórios por uma página com dados reais do banco, respeitando a regra de negócio de não exibir métricas não registradas.
+- **Implementação:**
+  - Reescrito `src/app/admin/relatorios/page.tsx` — Server Component assíncrono com `Promise.all` para 5 queries paralelas ao Supabase.
+  - **Cards de resumo** (4): Total de produtos, Produtos ativos, Categorias, Vitrines ativas — todos linkam para a página admin correspondente.
+  - **Alertas de estoque**: produtos ativos com estoque = 0 (alerta vermelho) e estoque 1–5 (alerta amarelo), com link para página pública do produto; oculto quando não há alertas.
+  - **Catálogo por categoria**: tabela com total de produtos, ativos e sem estoque por categoria.
+  - **Situação das vitrines**: cada vitrine com badge Ativa/Inativa e contagem de produtos.
+  - **Produtos sem imagem**: lista de produtos ativos sem nenhuma imagem, com link direto para `/admin/produtos`.
+  - **Nota de rodapé**: informa que métricas de comportamento do cliente (visualizações, pesquisas) serão adicionadas com sistema de eventos futuro.
+- **Decisões técnicas:**
+  - Sem migration nova — todos os dados vêm de tabelas existentes.
+  - Pure Server Component (sem interatividade necessária para leitura de relatórios).
+  - Regra de negócio respeitada: apenas dados efetivamente registrados no banco são exibidos.
+  - Alertas de estoque e seção de produtos sem imagem ficam ocultos quando não há dados a exibir (sem seções vazias desnecessárias).
+- **Verificações executadas:**
+  - `npx tsc --noEmit` — OK (exit 0)
+  - `npm run lint` — OK (sem warnings ou erros)
+  - `npm run build` — OK (15 páginas, `/admin/relatorios` = 519 B, exit 0)
+- **Arquivos modificados:** `src/app/admin/relatorios/page.tsx`
 
 ### 2026-11-04 — Formas de Pagamento Dinâmicas + Rota Subcategoria
 
