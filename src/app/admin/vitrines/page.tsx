@@ -1,72 +1,93 @@
-export default function AdminVitrinesPage() {
-  const vitrineSlots = [
-    {
-      slug: "vitrine_principal",
-      title: "Vitrine Principal",
-      displayType: "Carrossel",
-      description: "Exibida no topo da página inicial. Destaca os produtos em evidência.",
-    },
-    {
-      slug: "vitrine_2",
-      title: "Vitrine 2",
-      displayType: "Grade",
-      description: "Segunda seção da página inicial. Exibe produtos em grade.",
-    },
-    {
-      slug: "vitrine_3",
-      title: "Vitrine 3",
-      displayType: "Grade",
-      description: "Terceira seção da página inicial. Exibe produtos em grade.",
-    },
-  ];
+import { createClient } from "@/lib/supabase/server";
+import {
+  VitrinasClient,
+  type VitrineData,
+  type ProductOption,
+} from "./VitrinasClient";
 
-  return (
-    <div className="max-w-5xl">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-white text-2xl font-semibold">Vitrines</h1>
-          <p className="text-[#6b7280] text-sm mt-1">
-            Configure as vitrines exibidas na página inicial da loja.
-          </p>
-        </div>
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#ffd600]/10 text-[#ffd600] text-xs font-medium border border-[#ffd600]/20">
-          Em desenvolvimento
-        </span>
-      </div>
+export default async function AdminVitrinesPage() {
+  let vitrines: VitrineData[] = [];
+  let products: ProductOption[] = [];
 
-      <div className="space-y-4">
-        {vitrineSlots.map((vitrine, index) => (
-          <div
-            key={vitrine.slug}
-            className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-5 flex items-center justify-between gap-4"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-9 h-9 rounded-lg bg-[#2a2a2a] flex items-center justify-center text-[#6b7280] text-sm font-bold flex-shrink-0">
-                {index + 1}
-              </div>
-              <div>
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-white font-medium text-sm">{vitrine.title}</span>
-                  <span className="px-2 py-0.5 rounded text-xs bg-[#2a2a2a] text-[#9ca3af]">
-                    {vitrine.displayType}
-                  </span>
-                </div>
-                <p className="text-[#6b7280] text-xs">{vitrine.description}</p>
-              </div>
-            </div>
-            <div className="text-[#4b5563] text-xs flex-shrink-0">
-              Aguardando banco de dados
-            </div>
-          </div>
-        ))}
-      </div>
+  try {
+    const supabase = await createClient();
 
-      <div className="mt-6 bg-[#1a1a1a] border border-dashed border-[#2a2a2a] rounded-xl p-6 text-center">
-        <p className="text-[#4b5563] text-sm">
-          O gerenciamento completo das vitrines (adicionar produtos, definir ordem e ativar/desativar)
-          será habilitado após a configuração do banco de dados no Supabase.
-        </p>
-      </div>
-    </div>
-  );
+    // Buscar vitrines com seus produtos
+    const { data: vitrinesRaw } = await supabase
+      .from("vitrines")
+      .select(
+        "id, slug, title, display_type, is_active, position, vitrine_products(id, product_id, position)"
+      )
+      .order("position", { ascending: true });
+
+    // Buscar todos os produtos ativos com imagens
+    const { data: productsRaw } = await supabase
+      .from("products")
+      .select("id, name, price, stock, product_images(url, is_primary)")
+      .eq("is_active", true)
+      .order("name", { ascending: true });
+
+    type ImageRow = { url: string; is_primary: boolean };
+    type ProductRaw = {
+      id: string;
+      name: string;
+      price: number;
+      stock: number;
+      product_images: ImageRow[];
+    };
+
+    // Montar lookup de produtos para enriquecer vitrine_products
+    const productMap = new Map<string, ProductRaw>();
+    for (const p of (productsRaw ?? []) as ProductRaw[]) {
+      productMap.set(p.id, p);
+    }
+
+    function getPrimaryImage(imgs: ImageRow[]): string | null {
+      return imgs?.find((i) => i.is_primary)?.url ?? imgs?.[0]?.url ?? null;
+    }
+
+    type VitrineProductRaw = { id: string; product_id: string; position: number };
+    type VitrineRaw = {
+      id: string;
+      slug: string;
+      title: string;
+      display_type: string;
+      is_active: boolean;
+      position: number;
+      vitrine_products: VitrineProductRaw[];
+    };
+
+    vitrines = ((vitrinesRaw ?? []) as VitrineRaw[]).map((v) => ({
+      id: v.id,
+      slug: v.slug,
+      title: v.title,
+      display_type: v.display_type as VitrineData["display_type"],
+      is_active: v.is_active,
+      position: v.position,
+      products: (v.vitrine_products ?? []).map((vp) => {
+        const prod = productMap.get(vp.product_id);
+        return {
+          vitrine_product_id: vp.id,
+          product_id: vp.product_id,
+          product_name: prod?.name ?? "Produto removido",
+          position: vp.position,
+          price: prod?.price ?? 0,
+          stock: prod?.stock ?? 0,
+          primary_image_url: prod ? getPrimaryImage(prod.product_images) : null,
+        };
+      }),
+    }));
+
+    products = ((productsRaw ?? []) as ProductRaw[]).map((p) => ({
+      id: p.id,
+      name: p.name,
+      price: p.price,
+      stock: p.stock,
+      primary_image_url: getPrimaryImage(p.product_images),
+    }));
+  } catch {
+    // Migration não aplicada ou banco indisponível — renderiza estado vazio
+  }
+
+  return <VitrinasClient vitrines={vitrines} products={products} />;
 }
