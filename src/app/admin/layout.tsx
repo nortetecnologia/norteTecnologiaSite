@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
 import { AdminLayoutClient } from "./AdminLayoutClient";
 
 export default async function AdminLayout({
@@ -7,14 +6,21 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  if (!user) {
-    redirect("/admin/login");
+    // Sem usuário = página de login. Renderiza só o conteúdo, sem a shell admin.
+    // O middleware já redireciona rotas protegidas para /admin/login quando necessário.
+    if (!user) {
+      return <>{children}</>;
+    }
+
+    return <AdminLayoutClient userEmail={user.email}>{children}</AdminLayoutClient>;
+  } catch {
+    // Se o Supabase falhar, renderiza o conteúdo sem a shell (fail-safe).
+    return <>{children}</>;
   }
-
-  return <AdminLayoutClient userEmail={user.email}>{children}</AdminLayoutClient>;
 }
