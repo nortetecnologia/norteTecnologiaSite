@@ -8,23 +8,61 @@
 
 ## 1. Estado atual do projeto
 
-- **Estágio:** Painel administrativo implementado e todas as rotas admin criadas. Next.js 15.5.29 + Supabase Auth via `@supabase/ssr`.
-- **Última atividade:** Correção do erro `MIDDLEWARE_INVOCATION_FAILED` (500) no middleware de autenticação.
-- **Situação geral:** Deploy funcional na Vercel. Painel admin com 7 rotas: `/admin`, `/admin/login`, `/admin/produtos`, `/admin/categorias`, `/admin/vitrines`, `/admin/configuracoes`, `/admin/relatorios`. Middleware resiliente a falhas do Supabase. Aguarda criação do usuário admin no Supabase Auth para acesso real.
-- **Próxima etapa:** Criar usuário admin no Supabase Auth Dashboard (Authentication → Users → Add User) e verificar variáveis de ambiente na Vercel.
+- **Estágio:** Admin totalmente funcional com autenticação real. Primeira funcionalidade admin real implementada: página de Configurações com CRUD de `store_settings`. WhatsApp carregado dinamicamente do banco em todo o site.
+- **Última atividade:** Implementação de `store_settings` (migration + Server Action + formulário admin + WhatsApp dinâmico no site público).
+- **Situação geral:** Deploy funcional na Vercel. Variáveis de ambiente configuradas. Admin acessível. **Pendente:** aplicar as migrations 001 e 002 no Supabase SQL Editor para ativar banco de dados. Após isso, configurar WhatsApp em `/admin/configuracoes` e os botões do site público atualizarão automaticamente.
+- **Próxima etapa:** Usuário aplica as migrations no Supabase SQL Editor → implementar admin de categorias → implementar admin de produtos.
 
 ---
 
 ## 2. Última atualização
 
 - **Data:** 2026-11-04
-- **Atividade:** Correção do loop infinito no layout `/admin` (`Application error`).
-- **Resultado:** Layout não redireciona mais para `/admin/login`; renderiza a shell admin apenas quando há usuário autenticado. Build passou (11 páginas). Deploy enviado ao GitHub.
-- **Situação:** Concluída. Aguarda criação do usuário admin no Supabase Auth para acesso real.
+- **Atividade:** Tabela `store_settings`, página `/admin/configuracoes` funcional, e WhatsApp dinâmico em todo o site.
+- **Resultado:** Migration `002_store_settings.sql` criada. `src/lib/store-settings.ts` com `getStoreSettings()` (React `cache()`) e `buildWhatsAppUrl()`. Formulário admin com `useActionState` e Server Action para salvar. Header, Footer e homepage.tsx carregam o WhatsApp do banco (fallback para `https://wa.me/`). Build passou (11 páginas, tsc OK, lint OK).
+- **Situação:** Código concluído. Aguarda aplicação da migration no Supabase SQL Editor (001 + 002).
 
 ---
 
 ## 3. Implementações concluídas
+
+### 2026-11-04 — Configurações da loja (store_settings) + WhatsApp dinâmico
+
+- **Objetivo:** Criar a primeira funcionalidade admin real: gerenciamento das configurações da loja, com WhatsApp carregado dinamicamente do banco em todo o site.
+- **Implementação:**
+  - Criado `supabase/migrations/002_store_settings.sql` — tabela `store_settings` com linha única (single-row), RLS (leitura pública, escrita somente admin autenticado). Dados padrão inseridos via `ON CONFLICT DO NOTHING`.
+  - Criado `src/lib/store-settings.ts` — `getStoreSettings()` com `cache()` do React (deduplicação de chamadas por requisição) e `buildWhatsAppUrl()` com sanitização de dígitos.
+  - Criado `src/app/admin/configuracoes/actions.ts` — Server Action `saveStoreSettings()` com verificação de autenticação, validação do número de WhatsApp (mín. 12 dígitos), e `revalidatePath("/", "layout")` para atualizar todo o site após salvar.
+  - Criado `src/app/admin/configuracoes/ConfiguracoesForm.tsx` — Client Component com `useActionState` (Next.js 15 / React 19). Formulário em 3 seções: informações da loja, WhatsApp, horário. Feedback de sucesso/erro inline.
+  - Atualizado `src/app/admin/configuracoes/page.tsx` — Server Component async que carrega as configurações e renderiza o formulário pré-preenchido.
+  - Atualizado `src/components/layout/Header.tsx` — async Server Component, chama `getStoreSettings()`.
+  - Atualizado `src/components/layout/Footer.tsx` — async Server Component, chama `getStoreSettings()`.
+  - Atualizado `src/app/page.tsx` — async Server Component, chama `getStoreSettings()`. Os 3 links WhatsApp hardcoded (`https://wa.me/55`) substituídos por `{whatsappUrl}` dinâmico.
+- **Decisões técnicas:**
+  - `cache()` do React garante 1 chamada ao banco por request, mesmo com Header + Footer + page chamando `getStoreSettings()`.
+  - Fallback seguro: se banco não disponível ou migration não aplicada, retorna dados padrão sem quebrar o site.
+  - `useActionState` ao invés de `useState` manual — padrão Next.js 15 para formulários com Server Actions.
+- **Verificações executadas:**
+  - `npx tsc --noEmit` — OK (exit 0)
+  - `npm run lint` — OK (sem erros ou warnings)
+  - `npm run build` — OK (11 páginas, exit 0)
+- **Arquivos criados:** `supabase/migrations/002_store_settings.sql`, `src/lib/store-settings.ts`, `src/app/admin/configuracoes/actions.ts`, `src/app/admin/configuracoes/ConfiguracoesForm.tsx`
+- **Arquivos modificados:** `src/app/admin/configuracoes/page.tsx`, `src/components/layout/Header.tsx`, `src/components/layout/Footer.tsx`, `src/app/page.tsx`
+- **Pendência:** Migration 002 não aplicada no Supabase ainda (aguarda ação do usuário no SQL Editor).
+
+### 2026-11-04 — Correção do formulário de login (Server Action)
+
+- **Objetivo:** Corrigir o login que não fazia nada ao submeter email e senha.
+- **Causa raiz:** A página usava `createBrowserClient` (client-side) + `router.push("/admin") + router.refresh()`. Após `signInWithPassword` no cliente, o `router.push` inicia uma navegação client-side, mas o `router.refresh()` chamado em seguida re-renderiza a página atual, podendo cancelar a navegação. O servidor também pode não enxergar os cookies de sessão recém-definidos em tempo hábil para a requisição RSC.
+- **Correção:**
+  - Criado `src/app/admin/login/actions.ts` — Server Action `login(formData)` que usa `createClient()` (server-side), chama `signInWithPassword` no servidor e então `redirect("/admin")`. Os cookies de sessão são definidos server-side, garantindo que o middleware e o layout os enxerguem imediatamente na requisição seguinte.
+  - Atualizado `src/app/admin/login/page.tsx` — removido `useRouter` e `createClient` client-side. Formulário agora chama a Server Action via `await login(formData)`. Se a action retornar `{ error }`, exibe a mensagem. Se `redirect()` for chamado no servidor, a navegação ocorre automaticamente.
+- **Verificações executadas:**
+  - `npx tsc --noEmit` — OK (exit 0)
+  - `npm run build` — OK (11 páginas, exit 0)
+- **Arquivos modificados:** `src/app/admin/login/actions.ts` (novo), `src/app/admin/login/page.tsx`
+- **Commit:** `5f5925d`
+- **Merge para main:** `9056d9a`
 
 ### 2026-11-04 — Correção do loop infinito no layout admin
 
@@ -173,26 +211,22 @@ _(nenhuma tarefa em andamento no momento)_
 
 ## 5. Pendências e problemas conhecidos
 
-- **Usuário admin não criado:** Para acessar o painel, é necessário criar um usuário no Supabase Auth Dashboard → Authentication → Users → Add User.
-- **Verificar env vars na Vercel:** Confirmar que `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` estão configuradas em Settings → Environment Variables na Vercel. O middleware agora é resiliente a falhas, mas o login real requer as variáveis corretas.
-- **Cloudinary não configurado:** Conta não criada. Sem upload de imagens disponível. Variáveis `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` não configuradas.
-- **WhatsApp number hardcoded:** `https://wa.me/55` (placeholder) em Header.tsx, Footer.tsx e page.tsx. Será substituído por dado do banco.
-- **Vitrine placeholder:** Skeletons de carregamento na homepage. Aguarda integração com Supabase e banco de dados.
-- **Schema do banco não criado:** Tabelas de produtos, categorias, vitrines, configurações não existem no Supabase. Migration `supabase/migrations/001_vitrines.sql` criada, mas ainda não aplicada ao projeto Supabase.
-- **Sub-rotas admin sem conteúdo real:** `/admin/produtos`, `/admin/categorias`, `/admin/vitrines`, `/admin/configuracoes`, `/admin/relatorios` existem (retornam stub "em desenvolvimento"), mas aguardam integração com banco.
+- **Migrations não aplicadas:** `supabase/migrations/001_vitrines.sql` e `002_store_settings.sql` criadas mas NÃO aplicadas ao projeto Supabase. Aplicar no Supabase SQL Editor (001 primeiro, depois 002).
+- **WhatsApp não configurado:** Após aplicar as migrations, acessar `/admin/configuracoes` e preencher o número do WhatsApp (formato: 5591999999999).
+- **Cloudinary não configurado:** Variáveis `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` ainda pendentes para upload de imagens.
+- **Sub-rotas admin ainda são stubs:** `/admin/produtos`, `/admin/categorias`, `/admin/vitrines`, `/admin/relatorios` — aguardam banco de dados configurado e implementação.
 - **Links de loja 404:** `/categoria`, `/produto/[slug]`, `/carrinho`, `/checkout` não implementados ainda.
 
 ---
 
 ## 6. Próximas etapas
 
-1. **Criar projeto no Supabase:** Acessar supabase.com, criar projeto, obter URL e chaves.
-2. **Criar conta no Cloudinary:** Acessar cloudinary.com, criar conta, obter Cloud Name, API Key e API Secret.
-3. **Configurar variáveis de ambiente na Vercel:** Adicionar todas as variáveis do `.env.example` no painel da Vercel (Settings → Environment Variables).
-4. **Definir schema do banco de dados:** Criar tabelas no Supabase (produtos, categorias, vitrines, configurações, pedidos, usuários).
-5. **Instalar SDK do Supabase:** `npm install @supabase/supabase-js @supabase/ssr`.
-6. **Implementar autenticação e painel admin:** Rota `/admin/login` e layout administrativo com Supabase Auth.
-7. **Implementar páginas de categoria e produto:** Rotas `/categoria/[slug]` e `/produto/[slug]`.
+1. **Aplicar migrations no Supabase SQL Editor:** Executar `001_vitrines.sql` e depois `002_store_settings.sql`. Acesse supabase.com → SQL Editor → New Query.
+2. **Configurar WhatsApp:** Acessar `/admin/configuracoes` e preencher o número com código do país (ex: 5591999887766).
+3. **Implementar `/admin/categorias`:** CRUD de categorias com Supabase (depende da migration 001).
+4. **Implementar `/admin/produtos`:** CRUD de produtos com upload Cloudinary (depende de categorias + Cloudinary).
+5. **Implementar páginas públicas:** `/categoria/[slug]` e `/produto/[slug]`.
+6. **Implementar carrinho e checkout WhatsApp.**
 8. **Integrar Cloudinary:** Upload de imagens de produtos no painel admin.
 9. **Implementar carrinho:** Funcionalidade de carrinho com persistência (localStorage ou banco).
 10. **Implementar checkout:** Fluxo de finalização com mensagem automática para WhatsApp.
