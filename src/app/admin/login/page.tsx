@@ -1,36 +1,31 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { login } from "./actions";
 import Image from "next/image";
 
 export default function AdminLoginPage() {
-  const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    const supabase = createClient();
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const formData = new FormData(e.currentTarget);
+      const result = await login(formData);
 
-    if (authError) {
-      setError("Email ou senha inválidos.");
+      if (result?.error) {
+        setError(result.error);
+        setLoading(false);
+      }
+      // Se redirect() foi chamado no servidor, a navegação ocorre automaticamente
+    } catch {
+      setError("Erro ao conectar. Tente novamente.");
       setLoading(false);
-      return;
     }
-
-    router.push("/admin");
-    router.refresh();
   }
 
   return (
@@ -65,9 +60,8 @@ export default function AdminLoginPage() {
               </label>
               <input
                 id="email"
+                name="email"
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
                 placeholder="admin@nortetecnologia.com"
@@ -84,9 +78,8 @@ export default function AdminLoginPage() {
               </label>
               <input
                 id="password"
+                name="password"
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
                 required
                 autoComplete="current-password"
                 placeholder="••••••••"
