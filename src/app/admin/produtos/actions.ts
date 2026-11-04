@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 
 export type ProductActionResult = { success?: boolean; error?: string };
@@ -15,13 +16,13 @@ function toSlug(text: string): string {
 }
 
 async function getAuthClient() {
-  const supabase = await createClient();
+  const anonClient = await createClient();
   const {
     data: { user },
     error,
-  } = await supabase.auth.getUser();
+  } = await anonClient.auth.getUser();
   if (error || !user) throw new Error("Não autorizado.");
-  return supabase;
+  return createAdminClient();
 }
 
 function revalidate() {

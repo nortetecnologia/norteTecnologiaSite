@@ -8,8 +8,8 @@
 
 ## 1. Estado atual do projeto
 
-- **Estágio:** Admin completo + Páginas públicas completas + Carrinho + Checkout + Formas de pagamento configuráveis + Menu mobile funcional. Todas as rotas documentadas em `Rotas.md` implementadas.
-- **Última atividade:** 2026-11-04 — Sprint Menu Mobile (`MobileMenuToggle`).
+- **Estágio:** Admin completo + Páginas públicas completas + Carrinho + Checkout + Formas de pagamento configuráveis + Menu mobile funcional. Todas as rotas documentadas em `Rotas.md` implementadas. Operações admin de escrita corrigidas (service_role).
+- **Última atividade:** 2026-11-04 — Correção de bug: operações admin de escrita falhavam silenciosamente.
 - **Situação geral:** Deploy funcional na Vercel. **Pendente:** aplicar migrations (001–006) no Supabase SQL Editor em ordem. Após isso: configurar loja, criar categorias, cadastrar produtos, montar vitrines.
 - **Próxima etapa:** Usuário aplica migrations → configura loja → testa fluxo completo. Depois: Cloudinary upload para imagens, importação XML do CRM (aguarda arquivo de exemplo).
 
@@ -18,13 +18,36 @@
 ## 2. Última atualização
 
 - **Data:** 2026-11-04
-- **Atividade:** Menu Mobile — botão hambúrguer agora abre drawer lateral com navegação completa.
-- **Resultado:** Drawer desliza da direita com overlay, links de navegação, badge de status da loja e botão WhatsApp. Fecha ao clicar no overlay, ao navegar ou pressionar Escape. Build passou (15 páginas, tsc OK, lint OK).
-- **Situação:** Navegação mobile totalmente funcional.
+- **Atividade:** Correção de operações admin de escrita (criar/editar/excluir categorias, produtos, vitrines, configurações).
+- **Resultado:** Duas causas corrigidas: (1) `@supabase/ssr` e `@supabase/supabase-js` ausentes do `package.json` — Vercel não os instalava; (2) writes admin usavam cliente anon + JWT, que pode falhar com RLS `auth.role()` — trocado por cliente service_role (bypassa RLS após verificação de auth). Build passou (15 páginas, tsc OK, lint OK).
+- **Situação:** Todas as operações CRUD do admin devem funcionar após `SUPABASE_SECRET_KEY` estar configurada nas env vars do projeto.
 
 ---
 
 ## 3. Implementações concluídas
+
+### 2026-11-04 — Correção: Operações Admin de Escrita
+
+- **Problema:** "Erro ao criar categoria / produto / vitrine. Tente novamente." ao tentar criar qualquer item no admin.
+- **Causas identificadas:**
+  1. `@supabase/ssr` e `@supabase/supabase-js` estavam instalados localmente mas **ausentes do `package.json`** — `npm install` no deploy da Vercel não os instalava, fazendo todas as funções Supabase falharem em produção.
+  2. As Server Actions de escrita admin usavam o cliente anon + JWT de sessão para operações de banco. Com RLS `auth.role() = 'authenticated'`, o PostgREST pode não receber o JWT corretamente em Server Actions, causando falha silenciosa na inserção.
+- **Correção:**
+  - Adicionados `@supabase/ssr@0.12.7` e `@supabase/supabase-js@2.119.0` ao `package.json`.
+  - Criado `src/lib/supabase/admin.ts` — cria cliente com `SUPABASE_SECRET_KEY` (service_role), que bypassa RLS totalmente (seguro pois usado apenas em Server Actions server-side).
+  - Atualizado `getAuthClient()` em `admin/categorias/actions.ts`, `admin/vitrines/actions.ts`, `admin/produtos/actions.ts`: verifica auth via cliente anon (cookies), retorna cliente admin para operações de banco.
+  - Atualizado `admin/configuracoes/actions.ts`: mesma separação — anon para auth, admin para o UPDATE.
+- **Decisões técnicas:**
+  - Service_role (via `SUPABASE_SECRET_KEY`) NUNCA é exposto ao frontend — usado exclusivamente em Server Actions.
+  - Verificação de autenticação (`auth.getUser()`) é mantida antes de qualquer operação de escrita — não há bypass de segurança.
+  - Se `SUPABASE_SECRET_KEY` não estiver configurada nas env vars, a função lança erro descritivo.
+- **Pré-requisito para funcionar:** `SUPABASE_SECRET_KEY` deve estar configurada nas variáveis de ambiente da Vercel (Settings → Environment Variables).
+- **Verificações executadas:**
+  - `npx tsc --noEmit` — OK (exit 0)
+  - `npm run lint` — OK (sem warnings)
+  - `npm run build` — OK (15 páginas, exit 0)
+- **Arquivos criados:** `src/lib/supabase/admin.ts`
+- **Arquivos modificados:** `package.json`, `src/app/admin/categorias/actions.ts`, `src/app/admin/vitrines/actions.ts`, `src/app/admin/produtos/actions.ts`, `src/app/admin/configuracoes/actions.ts`
 
 ### 2026-11-04 — Menu Mobile
 
