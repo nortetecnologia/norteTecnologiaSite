@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient, logAdminError } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 
 export type ProductActionResult = { success?: boolean; error?: string };
@@ -21,7 +21,10 @@ async function getAuthClient() {
     data: { user },
     error,
   } = await anonClient.auth.getUser();
-  if (error || !user) throw new Error("Não autorizado.");
+  if (error || !user) {
+    console.error("[admin/produtos] Auth falhou:", error?.message ?? "sem usuário");
+    throw new Error("Não autorizado.");
+  }
   return createAdminClient();
 }
 
@@ -87,7 +90,7 @@ export async function createProduct(
     if (insertError) {
       if (insertError.code === "23505")
         return { error: "Já existe um produto com esse SKU ou nome." };
-      return { error: "Erro ao criar produto. Tente novamente." };
+      return { error: logAdminError("createProduct", insertError) };
     }
 
     if (imageUrl && product?.id) {
@@ -103,6 +106,7 @@ export async function createProduct(
     revalidate();
     return { success: true };
   } catch (e) {
+    console.error("[admin/produtos] createProduct exception:", e);
     return { error: e instanceof Error ? e.message : "Erro inesperado." };
   }
 }
@@ -153,7 +157,7 @@ export async function updateProduct(
     if (updateError) {
       if (updateError.code === "23505")
         return { error: "Já existe um produto com esse SKU." };
-      return { error: "Erro ao atualizar produto. Tente novamente." };
+      return { error: logAdminError("updateProduct", updateError) };
     }
 
     // Atualizar imagem principal
@@ -190,6 +194,7 @@ export async function updateProduct(
     revalidate();
     return { success: true };
   } catch (e) {
+    console.error("[admin/produtos] updateProduct exception:", e);
     return { error: e instanceof Error ? e.message : "Erro inesperado." };
   }
 }
@@ -206,7 +211,7 @@ export async function deleteProduct(
       .select("id", { count: "exact", head: true })
       .eq("product_id", id);
 
-    if (vitrineErr) return { error: "Erro ao verificar vitrines vinculadas." };
+    if (vitrineErr) return { error: logAdminError("deleteProduct/vitrinecheck", vitrineErr) };
 
     if (vitrineCount && vitrineCount > 0) {
       return {
@@ -219,11 +224,12 @@ export async function deleteProduct(
       .delete()
       .eq("id", id);
 
-    if (error) return { error: "Erro ao excluir produto. Tente novamente." };
+    if (error) return { error: logAdminError("deleteProduct", error) };
 
     revalidate();
     return { success: true };
   } catch (e) {
+    console.error("[admin/produtos] deleteProduct exception:", e);
     return { error: e instanceof Error ? e.message : "Erro inesperado." };
   }
 }
@@ -240,11 +246,12 @@ export async function toggleProductActive(
       .update({ is_active: isActive, updated_at: new Date().toISOString() })
       .eq("id", id);
 
-    if (error) return { error: "Erro ao atualizar status do produto." };
+    if (error) return { error: logAdminError("toggleProductActive", error) };
 
     revalidate();
     return { success: true };
   } catch (e) {
+    console.error("[admin/produtos] toggleProductActive exception:", e);
     return { error: e instanceof Error ? e.message : "Erro inesperado." };
   }
 }
