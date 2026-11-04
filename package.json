@@ -1,0 +1,21 @@
+{
+  "name": "nortetecnologiasite",
+  "version": "1.0.0",
+  "description": "Plataforma de e-commerce da Norte Tecnologia, desenvolvida com Next.js, TypeScript e Tailwind CSS, com painel administrativo, catálogo de produtos e serviços, gestão de estoque, integração com Supabase, Cloudinary e WhatsApp. Projeto preparado para evolução, segurança, escalabilidade e manutenção contínua.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nortetecnologia/norteTecnologiaSite.git"
+  },
+  "keywords": [],
+  "author": "Hiago Almeida Chaves",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/nortetecnologia/norteTecnologiaSite/issues"
+  },
+  "homepage": "https://github.com/nortetecnologia/norteTecnologiaSite#readme"
+}
