@@ -8,23 +8,34 @@
 
 ## 1. Estado atual do projeto
 
-- **Estágio:** Estrutura inicial criada. Sem banco de dados configurado.
-- **Última atividade:** Criação da estrutura base do projeto Next.js com identidade visual.
-- **Situação geral:** Homepage funcional com layout base. Aguardando configuração do Supabase, Cloudinary e variáveis de ambiente na Vercel para avançar com funcionalidades reais.
-- **Próxima etapa:** Configurar variáveis de ambiente na Vercel e integrar o Supabase.
+- **Estágio:** Estrutura inicial em produção na Vercel. Next.js 15.5.29. Sem banco de dados configurado.
+- **Última atividade:** Atualização de segurança do Next.js (15.0.3 → 15.5.29) e correção do UTF-8 BOM no package.json.
+- **Situação geral:** Deploy funcional na Vercel (repositório público, sem Co-Authored-By, sem BOM). Homepage estática com layout base visível em produção. Aguardando criação do projeto Supabase e conta Cloudinary para avançar com funcionalidades reais.
+- **Próxima etapa:** Criar projeto no Supabase, obter credenciais e configurar variáveis de ambiente na Vercel.
 
 ---
 
 ## 2. Última atualização
 
 - **Data:** 2026-11-04
-- **Atividade:** Criação da estrutura inicial do projeto Next.js.
-- **Resultado:** Projeto com homepage, Header, Footer, tokens de design e tipos TypeScript criados. Logo adicionado em `/public/logo.png`.
-- **Situação:** Concluída.
+- **Atividade:** Atualização do Next.js de 15.0.3 para 15.5.29 (vulnerabilidade de segurança detectada pela Vercel).
+- **Resultado:** Commit `67c4786` — `package.json` e `package-lock.json` atualizados. Build de produção passou sem erros. Push realizado para `origin/main`.
+- **Situação:** Concluída. Pipeline Vercel desbloqueado e funcional.
 
 ---
 
 ## 3. Implementações concluídas
+
+### 2026-11-04 — Correções no pipeline de deploy (Vercel)
+
+- **Objetivo:** Desbloquear o deploy automático na Vercel após a estrutura inicial.
+- **Problemas resolvidos:**
+  1. **Co-Authored-By bloqueando deploy:** Reescrita do histórico do main via `git push --force` para remover a linha `Co-Authored-By: Claude Sonnet 4.6`. Commit limpo `cc17ee4`.
+  2. **Repositório privado bloqueando Hobby Plan:** Repositório tornado público em `github.com/nortetecnologia/norteTecnologiaSite`.
+  3. **UTF-8 BOM no package.json:** Arquivo reescrito sem BOM via PowerShell. Commit `73ac52a`.
+  4. **Vulnerabilidade de segurança no Next.js:** Versão atualizada de `15.0.3` para `15.5.29`. Commit `67c4786`.
+- **Regra crítica estabelecida:** Nunca adicionar `Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>` neste projeto — bloqueia deploy na Vercel Hobby Plan.
+- **Resultado:** Pipeline Vercel funcional. Build passando com 4 páginas estáticas.
 
 ### 2026-11-04 — Estrutura inicial do projeto
 
@@ -83,31 +94,33 @@
 
 ## 4. Implementações em andamento
 
-_(nenhuma tarefa em andamento no momento)_
+_(nenhuma tarefa em andamento no momento — aguardando configuração de serviços externos)_
 
 ---
 
 ## 5. Pendências e problemas conhecidos
 
-- **WhatsApp number hardcoded:** O número do WhatsApp nos componentes Header.tsx, Footer.tsx e page.tsx está com `https://wa.me/55` (placeholder). Deve ser substituído por variável de ambiente ou configuração do Supabase quando disponível.
-- **Vitrine placeholder:** As vitrines na homepage exibem skeletons de carregamento. Precisam de integração real com Supabase.
-- **Links de navegação:** As páginas `/categoria`, `/produto/[slug]`, `/carrinho`, `/checkout` e `/admin` ainda não existem — resultam em 404.
-- **Supabase não configurado:** Nenhuma tabela criada. Schema precisa ser definido e migrado.
-- **Cloudinary não configurado:** Integração de upload pendente.
-- **Variáveis de ambiente na Vercel:** Precisam ser configuradas manualmente no painel da Vercel para o deploy funcionar corretamente em produção.
+- **Variáveis de ambiente não configuradas na Vercel:** `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SECRET_KEY`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` — precisam ser adicionadas no painel da Vercel após a criação dos projetos Supabase e Cloudinary.
+- **Supabase não configurado:** Projeto não criado. Sem tabelas, sem schema, sem autenticação.
+- **Cloudinary não configurado:** Conta não criada. Sem upload de imagens disponível.
+- **WhatsApp number hardcoded:** `https://wa.me/55` (placeholder) em Header.tsx, Footer.tsx e page.tsx. Será substituído por dado do banco quando o Supabase estiver configurado.
+- **Vitrine placeholder:** Skeletons de carregamento na homepage. Aguarda integração com Supabase.
+- **Links de navegação 404:** `/categoria`, `/produto/[slug]`, `/carrinho`, `/checkout` e `/admin` não implementados ainda.
 
 ---
 
 ## 6. Próximas etapas
 
-1. **Verificar build:** Confirmar que `npm run build` passa sem erros após o npm install.
-2. **Configurar variáveis de ambiente na Vercel:** Adicionar as variáveis do `.env.example` no painel da Vercel.
-3. **Configurar Supabase:** Criar o projeto, definir o schema e as tabelas principais.
-4. **Implementar páginas de categoria e produto:** Rotas `/categoria/[slug]` e `/produto/[slug]`.
-5. **Implementar autenticação e painel admin:** Rota `/admin/login` e layout administrativo.
-6. **Integrar Cloudinary:** Upload de imagens de produtos.
-7. **Implementar carrinho:** Funcionalidade de carrinho com persistência.
-8. **Implementar checkout:** Fluxo de finalização com mensagem automática para WhatsApp.
+1. **Criar projeto no Supabase:** Acessar supabase.com, criar projeto, obter URL e chaves.
+2. **Criar conta no Cloudinary:** Acessar cloudinary.com, criar conta, obter Cloud Name, API Key e API Secret.
+3. **Configurar variáveis de ambiente na Vercel:** Adicionar todas as variáveis do `.env.example` no painel da Vercel (Settings → Environment Variables).
+4. **Definir schema do banco de dados:** Criar tabelas no Supabase (produtos, categorias, vitrines, configurações, pedidos, usuários).
+5. **Instalar SDK do Supabase:** `npm install @supabase/supabase-js @supabase/ssr`.
+6. **Implementar autenticação e painel admin:** Rota `/admin/login` e layout administrativo com Supabase Auth.
+7. **Implementar páginas de categoria e produto:** Rotas `/categoria/[slug]` e `/produto/[slug]`.
+8. **Integrar Cloudinary:** Upload de imagens de produtos no painel admin.
+9. **Implementar carrinho:** Funcionalidade de carrinho com persistência (localStorage ou banco).
+10. **Implementar checkout:** Fluxo de finalização com mensagem automática para WhatsApp.
 
 ---
 
