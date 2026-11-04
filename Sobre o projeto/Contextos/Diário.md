@@ -8,9 +8,9 @@
 
 ## 1. Estado atual do projeto
 
-- **Estágio:** Estrutura inicial criada. Sem banco de dados configurado.
-- **Última atividade:** Criação da estrutura base do projeto Next.js com identidade visual.
-- **Situação geral:** Homepage funcional com layout base. Aguardando configuração do Supabase, Cloudinary e variáveis de ambiente na Vercel para avançar com funcionalidades reais.
+- **Estágio:** Estrutura inicial criada e integrada no main. Sem banco de dados configurado.
+- **Última atividade:** Merge da feature branch no main — arquivos Next.js agora em `norteTecnologiaSite/`.
+- **Situação geral:** Homepage funcional com layout base. Main branch atualizado na Vercel. Aguardando configuração do Supabase, Cloudinary e variáveis de ambiente na Vercel para avançar com funcionalidades reais.
 - **Próxima etapa:** Configurar variáveis de ambiente na Vercel e integrar o Supabase.
 
 ---
@@ -18,8 +18,8 @@
 ## 2. Última atualização
 
 - **Data:** 2026-11-04
-- **Atividade:** Criação da estrutura inicial do projeto Next.js.
-- **Resultado:** Projeto com homepage, Header, Footer, tokens de design e tipos TypeScript criados. Logo adicionado em `/public/logo.png`.
+- **Atividade:** Merge da feature branch `claude/norte-tecnologia-setup-f7c541` no `main`.
+- **Resultado:** Todos os arquivos Next.js estão agora diretamente em `norteTecnologiaSite/` (branch main). Conflito em `package.json` resolvido mantendo a versão Next.js. Push do main realizado.
 - **Situação:** Concluída.
 
 ---
