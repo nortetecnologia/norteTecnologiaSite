@@ -8,23 +8,43 @@
 
 ## 1. Estado atual do projeto
 
-- **Estágio:** Admin funcional. CRUD de categorias/subcategorias implementado. Horário de funcionamento detalhado por dia da semana. Badge Aberto/Fechada no Header do site público.
-- **Última atividade:** 2026-11-04 — Admin de categorias + horário detalhado + indicador de status no site público.
-- **Situação geral:** Deploy funcional na Vercel. **Pendente:** aplicar todas as migrations (001–004) no Supabase SQL Editor. Após isso: configurar WhatsApp e horários em `/admin/configuracoes`, criar categorias em `/admin/categorias`.
-- **Próxima etapa:** Usuário aplica migrations 001–004 → configura WhatsApp e horários → implementar `/admin/produtos`.
+- **Estágio:** Admin completo até produtos. CRUD de categorias/subcategorias, configurações com horário detalhado, e agora CRUD completo de produtos com busca, modais e toggle de status.
+- **Última atividade:** 2026-11-04 — Admin de produtos (`/admin/produtos`) implementado.
+- **Situação geral:** Deploy funcional na Vercel. **Pendente:** aplicar todas as migrations (001–005) no Supabase SQL Editor em ordem. Após isso: configurar WhatsApp e horários, criar categorias, cadastrar produtos.
+- **Próxima etapa:** Usuário aplica migrations 001–005 → configura WhatsApp/horários/categorias/produtos → implementar `/admin/vitrines` → implementar páginas públicas.
 
 ---
 
 ## 2. Última atualização
 
 - **Data:** 2026-11-04
-- **Atividade:** Admin de categorias + horário de funcionamento detalhado + badge Aberto/Fechada no Header.
-- **Resultado:** Migration 003 (categories/subcategories), migration 004 (business_hours_schedule JSONB), `src/lib/business-hours.ts` com tipos e `isStoreOpen()`, `BusinessHoursEditor.tsx` com editor por dia da semana + intervalo de almoço, `CategoriasClient.tsx` com CRUD completo via modais, badge de status no Header. Build passou (11 páginas, tsc OK, lint OK).
-- **Situação:** Código concluído. Aguarda aplicação de todas as migrations no Supabase.
+- **Atividade:** CRUD completo de produtos no painel admin.
+- **Resultado:** Migration 005 (brand, sku, FK constraints categories/subcategories), `src/app/admin/produtos/actions.ts` (createProduct, updateProduct, deleteProduct, toggleProductActive), `src/app/admin/produtos/ProdutosClient.tsx` (lista com busca, modal criação/edição com subcategoria filtrada por categoria, modal exclusão, toggle ativo/inativo), `src/app/admin/produtos/page.tsx` (Server Component com fetch de produtos+categorias, merge em memória, try/catch para DB indisponível). Build passou (11 páginas, tsc OK, lint OK).
+- **Situação:** Código concluído. Cloudinary upload de imagens pendente para sprint futuro (imagem por URL já funciona).
 
 ---
 
 ## 3. Implementações concluídas
+
+### 2026-11-04 — Admin de produtos (`/admin/produtos`)
+
+- **Objetivo:** Implementar CRUD completo de produtos no painel admin.
+- **Implementação:**
+  - Criado `supabase/migrations/005_products_brand_sku.sql` — adiciona `brand TEXT` e `sku TEXT` à tabela `products`; índice único parcial em `sku` (permite múltiplos NULLs); FK constraints de `products.category_id → categories(id)` e `products.subcategory_id → subcategories(id)` ON DELETE RESTRICT (usando DO block para idempotência).
+  - Criado `src/app/admin/produtos/actions.ts` — `createProduct(formData)`, `updateProduct(id, formData)`, `deleteProduct(id)`, `toggleProductActive(id, isActive)`. Cada action: auth check server-side, validação de tipos (preço ≥ 0, estoque inteiro ≥ 0), slug único com fallback numérico, check de vínculos em vitrines antes de deletar, `revalidatePath("/admin/produtos")`.
+  - Criado `src/app/admin/produtos/ProdutosClient.tsx` — lista de produtos com busca client-side (nome/marca/SKU); thumbnail com fallback icon; preço formatado em R$; badge Ativo/Inativo com toggle direto; modal de criação/edição (nome, marca, SKU, preço, estoque, categoria, subcategoria dinâmica, descrição, URL imagem, toggle status no edit); modal de exclusão com mensagem de erro inline; `formatCurrency` de `@/lib/utils`.
+  - Atualizado `src/app/admin/produtos/page.tsx` — Server Component async; busca produtos com `product_images` aninhadas e categorias com `subcategories`; merge em memória (sem FK join por incompatibilidade com schema pre-005); try/catch para DB indisponível.
+- **Decisões técnicas:**
+  - Imagens por URL para esta versão. Cloudinary upload fica para sprint com Cloudinary configurado.
+  - FK constraints adicionadas em migration 005 (seguro pois nenhuma migration foi aplicada ainda e tabelas estarão vazias).
+  - Merge categoria/subcategoria em memória no Server Component (evita dependência de FK join no PostgREST).
+  - Padrão idêntico a `/admin/categorias`: `runAction`, `useTransition`, `useRouter().refresh()`, `key` para remount do form.
+- **Verificações executadas:**
+  - `npx tsc --noEmit` — OK (exit 0)
+  - `npm run lint` — OK (sem warnings ou erros)
+  - `npm run build` — OK (11 páginas, `/admin/produtos` = 4.91 kB, exit 0)
+- **Arquivos criados:** `supabase/migrations/005_products_brand_sku.sql`, `src/app/admin/produtos/actions.ts`, `src/app/admin/produtos/ProdutosClient.tsx`
+- **Arquivos modificados:** `src/app/admin/produtos/page.tsx`
 
 ### 2026-11-04 — Configurações da loja (store_settings) + WhatsApp dinâmico
 

@@ -1,31 +1,97 @@
-export default function AdminProdutosPage() {
-  return (
-    <div className="max-w-5xl">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-white text-2xl font-semibold">Produtos</h1>
-          <p className="text-[#6b7280] text-sm mt-1">
-            Gerencie o catálogo de produtos e serviços.
-          </p>
-        </div>
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#ffd600]/10 text-[#ffd600] text-xs font-medium border border-[#ffd600]/20">
-          Em desenvolvimento
-        </span>
-      </div>
+import { createClient } from "@/lib/supabase/server";
+import { ProdutosClient, type ProductData, type CategoryOption } from "./ProdutosClient";
 
-      <div className="bg-[#1a1a1a] border border-dashed border-[#2a2a2a] rounded-xl p-12 text-center">
-        <div className="mx-auto w-14 h-14 bg-[#2a2a2a] rounded-full flex items-center justify-center mb-4">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <path d="M16 10a4 4 0 01-8 0" />
-          </svg>
-        </div>
-        <h2 className="text-white font-medium mb-2">Nenhum produto cadastrado</h2>
-        <p className="text-[#6b7280] text-sm max-w-sm mx-auto">
-          O gerenciamento de produtos será habilitado após a configuração do banco de dados.
-        </p>
-      </div>
-    </div>
-  );
+export default async function AdminProdutosPage() {
+  let products: ProductData[] = [];
+  let categories: CategoryOption[] = [];
+
+  try {
+    const supabase = await createClient();
+
+    // Buscar produtos com imagens
+    const { data: productsRaw } = await supabase
+      .from("products")
+      .select(
+        "id, name, description, brand, sku, price, stock, category_id, subcategory_id, is_active, product_images(url, is_primary)"
+      )
+      .order("created_at", { ascending: false });
+
+    // Buscar categorias com subcategorias
+    const { data: categoriesRaw } = await supabase
+      .from("categories")
+      .select("id, name, subcategories(id, name)")
+      .order("name", { ascending: true });
+
+    // Montar mapa de categorias/subcategorias para lookup
+    type SubcategoryRow = { id: string; name: string };
+    type CategoryRow = {
+      id: string;
+      name: string;
+      subcategories: SubcategoryRow[];
+    };
+
+    const catMap = new Map<string, { name: string; subs: Map<string, string> }>();
+    for (const c of (categoriesRaw ?? []) as CategoryRow[]) {
+      const subs = new Map<string, string>();
+      for (const s of c.subcategories ?? []) {
+        subs.set(s.id, s.name);
+      }
+      catMap.set(c.id, { name: c.name, subs });
+    }
+
+    // Normalizar produtos
+    type ImageRow = { url: string; is_primary: boolean };
+    type ProductRow = {
+      id: string;
+      name: string;
+      description: string | null;
+      brand: string | null;
+      sku: string | null;
+      price: number;
+      stock: number;
+      category_id: string | null;
+      subcategory_id: string | null;
+      is_active: boolean;
+      product_images: ImageRow[];
+    };
+
+    products = ((productsRaw ?? []) as ProductRow[]).map((p) => {
+      const primaryImg =
+        p.product_images?.find((img) => img.is_primary)?.url ??
+        p.product_images?.[0]?.url ??
+        null;
+
+      const catEntry = p.category_id ? catMap.get(p.category_id) : undefined;
+      const subcategoryName =
+        catEntry && p.subcategory_id
+          ? catEntry.subs.get(p.subcategory_id) ?? null
+          : null;
+
+      return {
+        id: p.id,
+        name: p.name,
+        description: p.description,
+        brand: p.brand,
+        sku: p.sku,
+        price: p.price,
+        stock: p.stock,
+        category_id: p.category_id,
+        subcategory_id: p.subcategory_id,
+        is_active: p.is_active,
+        primary_image_url: primaryImg,
+        category_name: catEntry?.name ?? null,
+        subcategory_name: subcategoryName,
+      };
+    });
+
+    categories = ((categoriesRaw ?? []) as CategoryRow[]).map((c) => ({
+      id: c.id,
+      name: c.name,
+      subcategories: c.subcategories ?? [],
+    }));
+  } catch {
+    // Migration não aplicada ou banco indisponível — renderiza estado vazio
+  }
+
+  return <ProdutosClient products={products} categories={categories} />;
 }
