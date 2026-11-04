@@ -18,13 +18,31 @@
 ## 2. Última atualização
 
 - **Data:** 2026-11-04
-- **Atividade:** Correção do middleware (`MIDDLEWARE_INVOCATION_FAILED`) + criação das 5 sub-rotas admin.
-- **Resultado:** Middleware robusto com guarda de env vars e try-catch fail-secure. Build passou com 11 páginas. Deploy enviado ao GitHub.
-- **Situação:** Concluída. Aguarda criação do usuário admin no Supabase Auth.
+- **Atividade:** Correção do loop infinito no layout `/admin` (`Application error`).
+- **Resultado:** Layout não redireciona mais para `/admin/login`; renderiza a shell admin apenas quando há usuário autenticado. Build passou (11 páginas). Deploy enviado ao GitHub.
+- **Situação:** Concluída. Aguarda criação do usuário admin no Supabase Auth para acesso real.
 
 ---
 
 ## 3. Implementações concluídas
+
+### 2026-11-04 — Correção do loop infinito no layout admin
+
+- **Objetivo:** Corrigir `Application error` ao acessar `/admin/login`.
+- **Causa raiz:** `src/app/admin/layout.tsx` aplicava-se a todas as rotas `/admin/*`, incluindo `/admin/login`. Quando não havia usuário autenticado, o layout chamava `redirect("/admin/login")`, que renderizava o mesmo layout novamente — loop infinito.
+- **Correção:**
+  - Removida a chamada `redirect()` do layout.
+  - Sem usuário autenticado: layout renderiza apenas `{children}` (a tela de login sem shell).
+  - Com usuário autenticado: renderiza a shell completa (`AdminLayoutClient` com sidebar e header).
+  - Adicionado try-catch para robustez.
+- **Responsabilidade de cada camada:**
+  - Middleware: redireciona rotas protegidas para `/admin/login` se não autenticado.
+  - Layout: exibe a shell admin apenas para usuários autenticados.
+- **Verificações executadas:**
+  - `npx tsc --noEmit` — OK
+  - `npm run build` — OK (11 páginas, exit 0)
+- **Arquivo modificado:** `src/app/admin/layout.tsx`
+- **Commit:** `a7f4339`
 
 ### 2026-11-04 — Correção do middleware e criação das rotas admin
 
