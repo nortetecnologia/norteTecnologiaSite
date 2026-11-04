@@ -79,3 +79,24 @@ export interface StoreSettings {
   business_hours?: string;
   payment_methods: string[];
 }
+
+export type VitrineDisplayType = "carousel" | "grid" | "row";
+
+export interface Vitrine {
+  id: string;
+  slug: string;
+  title: string;
+  display_type: VitrineDisplayType;
+  is_active: boolean;
+  position: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VitrineProduct {
+  id: string;
+  vitrine_id: string;
+  product_id: string;
+  position: number;
+  product?: Product;
+}
