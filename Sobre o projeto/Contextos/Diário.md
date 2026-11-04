@@ -8,23 +8,44 @@
 
 ## 1. Estado atual do projeto
 
-- **Estágio:** Admin completo até vitrines. CRUD de categorias/subcategorias, configurações com horário detalhado, CRUD de produtos e agora gerenciamento completo de vitrines (adicionar/remover/reordenar produtos por vitrine, editar título, ativar/desativar).
-- **Última atividade:** 2026-11-04 — Admin de vitrines (`/admin/vitrines`) implementado.
+- **Estágio:** Admin completo (categorias, configurações, produtos, vitrines) + Páginas públicas implementadas (homepage dinâmica, listagem de categorias, produtos por categoria, detalhe do produto com CTA WhatsApp).
+- **Última atividade:** 2026-11-04 — Páginas públicas implementadas (Sprint Páginas Públicas).
 - **Situação geral:** Deploy funcional na Vercel. **Pendente:** aplicar todas as migrations (001–005) no Supabase SQL Editor em ordem. Após isso: configurar WhatsApp e horários, criar categorias, cadastrar produtos, montar vitrines.
-- **Próxima etapa:** Usuário aplica migrations → configura loja → implementar páginas públicas (`/categoria/[slug]`, `/produto/[slug]`) → implementar carrinho + checkout WhatsApp.
+- **Próxima etapa:** Usuário aplica migrations → configura loja → cadastra produtos → implementar carrinho localStorage + checkout WhatsApp com mensagem formatada.
 
 ---
 
 ## 2. Última atualização
 
 - **Data:** 2026-11-04
-- **Atividade:** Gerenciamento de vitrines no painel admin.
-- **Resultado:** `src/app/admin/vitrines/actions.ts` (5 Server Actions), `src/app/admin/vitrines/VitrinasClient.tsx` (3 cards de vitrine com lista de produtos, reordenação ↑↓, modal de seleção de produto, edição de título, toggle ativo/inativo), `src/app/admin/vitrines/page.tsx` (Server Component com fetch de vitrines+produtos). Build passou (11 páginas, tsc OK, lint OK).
-- **Situação:** Código concluído. Sem nova migration — schema já estava em 001.
+- **Atividade:** Páginas públicas do site (homepage dinâmica + rotas de categoria e produto).
+- **Resultado:** `src/components/ui/ProductCard.tsx` (card reutilizável), `src/app/page.tsx` (homepage com vitrines e categorias do DB, fallback estático), `src/app/categoria/page.tsx` (listagem de categorias), `src/app/categoria/[slug]/page.tsx` (produtos por categoria), `src/app/produto/[slug]/page.tsx` (detalhe com galeria, CTA WhatsApp pré-preenchido). Build passou (12 páginas, tsc OK, lint OK).
+- **Situação:** Código concluído. Páginas carregam dados do Supabase com fallback gracioso quando DB indisponível ou migrations não aplicadas.
 
 ---
 
 ## 3. Implementações concluídas
+
+### 2026-11-04 — Páginas públicas (Sprint Páginas Públicas)
+
+- **Objetivo:** Implementar todas as páginas públicas do e-commerce: homepage com vitrines dinâmicas, listagem de categorias, produtos por categoria e detalhe de produto com CTA WhatsApp.
+- **Implementação:**
+  - Criado `src/components/ui/ProductCard.tsx` — Server Component reutilizável; imagem com `fill` + `unoptimized` + `aspect-square`; placeholder SVG quando sem imagem; preço em `brand-yellow`; hover com borda amarela; link para `/produto/[slug]`.
+  - Atualizado `src/app/page.tsx` — homepage completamente dinâmica; carrega categorias e vitrines do Supabase com `Promise.all`; in-memory merge (vitrines → vitrine_products → produtos); fallback para categorias estáticas se DB vazio; fallback para skeleton animado se vitrines vazias; seções: Hero (CTA WhatsApp + "Ver Produtos"), Diferenciais (4 ícones), Categorias (grid dinâmico), Vitrines dinâmicas (ou placeholder), Serviços (4 cards), CTA Final.
+  - Criado `src/app/categoria/page.tsx` — listagem de categorias com subcategory count do DB; fallback para 6 categorias estáticas; breadcrumb; grid 2→3→4 colunas; hover brand-yellow.
+  - Criado `src/app/categoria/[slug]/page.tsx` — Server Component com `generateMetadata`; busca categoria por slug e produtos por `category_id`; `notFound()` quando categoria não existe; counter de produtos; grid 2→3→4→5 colunas; estado vazio com link para outras categorias.
+  - Criado `src/app/produto/[slug]/page.tsx` — Server Component com `generateMetadata`; imagem principal `fill object-contain priority`; galeria de thumbnails quando múltiplas imagens; badge estoque (verde/vermelho); preço em destaque; CTA WhatsApp com mensagem pré-formatada (nome + preço + pedido de informações); breadcrumb com categoria.
+- **Decisões técnicas:**
+  - `notFound()` em vez de page vazia para 404 de slug inexistente — correto para SEO.
+  - WhatsApp URL: `buildWhatsAppUrl(number) + "&text=" + encodeURIComponent(message)` para CTA pré-preenchido.
+  - `unoptimized` em todas as imagens de produto/vitrine (URLs externas do usuário, apenas Cloudinary está configurado no next.config.ts).
+  - In-memory merge no homepage: duas queries separadas (vitrines+vitrine_products e produtos by IDs) para evitar FK joins problemáticos.
+  - Try/catch geral nas pages: DB indisponível ativa fallback estático (nunca quebra a tela).
+- **Verificações executadas:**
+  - `npx tsc --noEmit` — OK (exit 0)
+  - `npx next build` — OK (12 páginas, todas `ƒ Dynamic`, exit 0); corrigido `let vitrineSections` → `const` (prefer-const ESLint).
+- **Arquivos criados:** `src/components/ui/ProductCard.tsx`, `src/app/categoria/page.tsx`, `src/app/categoria/[slug]/page.tsx`, `src/app/produto/[slug]/page.tsx`
+- **Arquivos modificados:** `src/app/page.tsx`, `Sobre o projeto/Contextos/Diário.md`
 
 ### 2026-11-04 — Admin de vitrines (`/admin/vitrines`)
 
