@@ -8,23 +8,43 @@
 
 ## 1. Estado atual do projeto
 
-- **Estágio:** Admin completo até produtos. CRUD de categorias/subcategorias, configurações com horário detalhado, e agora CRUD completo de produtos com busca, modais e toggle de status.
-- **Última atividade:** 2026-11-04 — Admin de produtos (`/admin/produtos`) implementado.
-- **Situação geral:** Deploy funcional na Vercel. **Pendente:** aplicar todas as migrations (001–005) no Supabase SQL Editor em ordem. Após isso: configurar WhatsApp e horários, criar categorias, cadastrar produtos.
-- **Próxima etapa:** Usuário aplica migrations 001–005 → configura WhatsApp/horários/categorias/produtos → implementar `/admin/vitrines` → implementar páginas públicas.
+- **Estágio:** Admin completo até vitrines. CRUD de categorias/subcategorias, configurações com horário detalhado, CRUD de produtos e agora gerenciamento completo de vitrines (adicionar/remover/reordenar produtos por vitrine, editar título, ativar/desativar).
+- **Última atividade:** 2026-11-04 — Admin de vitrines (`/admin/vitrines`) implementado.
+- **Situação geral:** Deploy funcional na Vercel. **Pendente:** aplicar todas as migrations (001–005) no Supabase SQL Editor em ordem. Após isso: configurar WhatsApp e horários, criar categorias, cadastrar produtos, montar vitrines.
+- **Próxima etapa:** Usuário aplica migrations → configura loja → implementar páginas públicas (`/categoria/[slug]`, `/produto/[slug]`) → implementar carrinho + checkout WhatsApp.
 
 ---
 
 ## 2. Última atualização
 
 - **Data:** 2026-11-04
-- **Atividade:** CRUD completo de produtos no painel admin.
-- **Resultado:** Migration 005 (brand, sku, FK constraints categories/subcategories), `src/app/admin/produtos/actions.ts` (createProduct, updateProduct, deleteProduct, toggleProductActive), `src/app/admin/produtos/ProdutosClient.tsx` (lista com busca, modal criação/edição com subcategoria filtrada por categoria, modal exclusão, toggle ativo/inativo), `src/app/admin/produtos/page.tsx` (Server Component com fetch de produtos+categorias, merge em memória, try/catch para DB indisponível). Build passou (11 páginas, tsc OK, lint OK).
-- **Situação:** Código concluído. Cloudinary upload de imagens pendente para sprint futuro (imagem por URL já funciona).
+- **Atividade:** Gerenciamento de vitrines no painel admin.
+- **Resultado:** `src/app/admin/vitrines/actions.ts` (5 Server Actions), `src/app/admin/vitrines/VitrinasClient.tsx` (3 cards de vitrine com lista de produtos, reordenação ↑↓, modal de seleção de produto, edição de título, toggle ativo/inativo), `src/app/admin/vitrines/page.tsx` (Server Component com fetch de vitrines+produtos). Build passou (11 páginas, tsc OK, lint OK).
+- **Situação:** Código concluído. Sem nova migration — schema já estava em 001.
 
 ---
 
 ## 3. Implementações concluídas
+
+### 2026-11-04 — Admin de vitrines (`/admin/vitrines`)
+
+- **Objetivo:** Implementar gerenciamento das vitrines da página inicial no painel admin.
+- **Implementação:**
+  - Criado `src/app/admin/vitrines/actions.ts` — `updateVitrineTitle(id, title)`, `toggleVitrineActive(id, isActive)`, `addProductToVitrine(vitrineId, productId)`, `removeProductFromVitrine(vitrineProductId)`, `moveVitrineProduct(vitrineId, vitrineProductId, direction)`. Cada action: auth check, `revalidatePath("/admin/vitrines")` + `revalidatePath("/")` para atualizar a homepage.
+  - Criado `src/app/admin/vitrines/VitrinasClient.tsx` — 3 cards de vitrine (uma por vitrine); cada card tem: cabeçalho com título, badge de tipo (Carrossel/Grade/Linha), toggle ativo/inativo (verde/cinza), botão de editar título; corpo com lista de produtos (thumbnail, nome, preço, alerta sem estoque, botões ↑↓, botão remover), botão "Adicionar produto" dashed. Modal de edição de título (input + Enter para salvar). Modal de seleção de produto (busca client-side, lista de produtos disponíveis, clique para adicionar).
+  - Atualizado `src/app/admin/vitrines/page.tsx` — Server Component async; busca vitrines com `vitrine_products` aninhados e todos os produtos ativos com imagens; merge em memória para enriquecer vitrine_products com nome/preço/estoque/imagem de cada produto; try/catch para DB indisponível.
+- **Decisões técnicas:**
+  - Sem nova migration — schema de vitrines já estava completo na migration 001.
+  - `revalidatePath("/")` em todas as actions para que mudanças nas vitrines reflitam imediatamente na homepage.
+  - Produtos sem estoque ficam visíveis no admin (com alerta) mas não aparecem na vitrine pública (filtro aplicado no SELECT público: `is_active = true AND stock > 0`).
+  - Reordenação por troca de posições (simples, sem dependência de biblioteca de drag-and-drop).
+  - Modal de produto com busca client-side para agilizar seleção.
+- **Verificações executadas:**
+  - `npx tsc --noEmit` — OK (exit 0)
+  - `npm run lint` — OK (sem warnings ou erros)
+  - `npm run build` — OK (11 páginas, `/admin/vitrines` = 3.66 kB, exit 0)
+- **Arquivos criados:** `src/app/admin/vitrines/actions.ts`, `src/app/admin/vitrines/VitrinasClient.tsx`
+- **Arquivos modificados:** `src/app/admin/vitrines/page.tsx`
 
 ### 2026-11-04 — Admin de produtos (`/admin/produtos`)
 
@@ -241,15 +261,12 @@ _(nenhuma tarefa em andamento no momento)_
 
 ## 6. Próximas etapas
 
-1. **Aplicar migrations no Supabase SQL Editor:** Executar `001_vitrines.sql` e depois `002_store_settings.sql`. Acesse supabase.com → SQL Editor → New Query.
-2. **Configurar WhatsApp:** Acessar `/admin/configuracoes` e preencher o número com código do país (ex: 5591999887766).
-3. **Implementar `/admin/categorias`:** CRUD de categorias com Supabase (depende da migration 001).
-4. **Implementar `/admin/produtos`:** CRUD de produtos com upload Cloudinary (depende de categorias + Cloudinary).
-5. **Implementar páginas públicas:** `/categoria/[slug]` e `/produto/[slug]`.
-6. **Implementar carrinho e checkout WhatsApp.**
-8. **Integrar Cloudinary:** Upload de imagens de produtos no painel admin.
-9. **Implementar carrinho:** Funcionalidade de carrinho com persistência (localStorage ou banco).
-10. **Implementar checkout:** Fluxo de finalização com mensagem automática para WhatsApp.
+1. **Aplicar migrations no Supabase SQL Editor:** 001 → 002 → 003 → 004 → 005 (em ordem).
+2. **Configurar loja:** `/admin/configuracoes` — WhatsApp, horários. `/admin/categorias` — criar categorias/subcategorias. `/admin/produtos` — cadastrar produtos. `/admin/vitrines` — montar vitrines.
+3. **Implementar páginas públicas:** `/categoria/[slug]` — listagem de produtos por categoria. `/produto/[slug]` — detalhe do produto.
+4. **Implementar carrinho:** Persistência via localStorage ou contexto React.
+5. **Implementar checkout:** Fluxo de finalização com mensagem automática para WhatsApp (número das configurações).
+6. **Integrar Cloudinary:** Upload de imagens de produtos no painel admin (atualmente aceita apenas URL).
 
 ---
 
