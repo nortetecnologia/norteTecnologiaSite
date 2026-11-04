@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getStoreSettings, buildWhatsAppUrl } from "@/lib/store-settings";
 import { isStoreOpen } from "@/lib/business-hours";
 import { CartIcon } from "@/components/ui/CartIcon";
+import { MobileMenuToggle } from "@/components/layout/MobileMenuToggle";
 
 export default async function Header() {
   const settings = await getStoreSettings();
@@ -84,23 +85,11 @@ export default async function Header() {
             WhatsApp
           </a>
 
-          <button
-            type="button"
-            className="relative flex h-10 w-10 items-center justify-center rounded-md border border-brand-gray-mid text-gray-300 hover:border-brand-yellow hover:text-brand-yellow md:hidden"
-            aria-label="Abrir menu"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="h-5 w-5"
-              aria-hidden="true"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-            </svg>
-          </button>
+          <MobileMenuToggle
+            whatsappUrl={whatsappUrl}
+            storeOpen={storeOpen}
+            hasSchedule={!!settings.business_hours_schedule}
+          />
         </div>
       </div>
     </header>

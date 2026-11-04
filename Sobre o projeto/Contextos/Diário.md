@@ -8,8 +8,8 @@
 
 ## 1. Estado atual do projeto
 
-- **Estágio:** Admin completo (incluindo Relatórios com dados reais) + Páginas públicas completas + Carrinho + Checkout + Formas de pagamento configuráveis. Todas as rotas documentadas em `Rotas.md` implementadas.
-- **Última atividade:** 2026-11-04 — Sprint Relatórios (`/admin/relatorios`).
+- **Estágio:** Admin completo + Páginas públicas completas + Carrinho + Checkout + Formas de pagamento configuráveis + Menu mobile funcional. Todas as rotas documentadas em `Rotas.md` implementadas.
+- **Última atividade:** 2026-11-04 — Sprint Menu Mobile (`MobileMenuToggle`).
 - **Situação geral:** Deploy funcional na Vercel. **Pendente:** aplicar migrations (001–006) no Supabase SQL Editor em ordem. Após isso: configurar loja, criar categorias, cadastrar produtos, montar vitrines.
 - **Próxima etapa:** Usuário aplica migrations → configura loja → testa fluxo completo. Depois: Cloudinary upload para imagens, importação XML do CRM (aguarda arquivo de exemplo).
 
@@ -18,13 +18,40 @@
 ## 2. Última atualização
 
 - **Data:** 2026-11-04
-- **Atividade:** Página `/admin/relatorios` — substituiu stub estático por dados reais do banco.
-- **Resultado:** Relatórios exibem: 4 cards de resumo (total produtos, ativos, categorias, vitrines ativas), alertas de estoque (sem estoque e baixo ≤5), tabela de catálogo por categoria (total/ativos/sem estoque), status das vitrines, lista de produtos ativos sem imagem. Build passou (15 páginas, tsc OK, lint OK).
-- **Situação:** Todos os módulos admin documentados em `Rotas.md` implementados com dados reais.
+- **Atividade:** Menu Mobile — botão hambúrguer agora abre drawer lateral com navegação completa.
+- **Resultado:** Drawer desliza da direita com overlay, links de navegação, badge de status da loja e botão WhatsApp. Fecha ao clicar no overlay, ao navegar ou pressionar Escape. Build passou (15 páginas, tsc OK, lint OK).
+- **Situação:** Navegação mobile totalmente funcional.
 
 ---
 
 ## 3. Implementações concluídas
+
+### 2026-11-04 — Menu Mobile
+
+- **Objetivo:** Transformar o botão hambúrguer estático (sem função) em um menu de navegação funcional para dispositivos móveis.
+- **Implementação:**
+  - Criado `src/components/layout/MobileMenuToggle.tsx` — Client Component com estado `isOpen`.
+    - Renderiza o botão hambúrguer (substitui o botão estático do `Header.tsx`).
+    - Overlay semi-transparente com `backdrop-blur-sm` ao fundo, fecha ao clicar.
+    - Drawer lateral (272px, `right-0`) com transição CSS `translate-x` (300ms ease-in-out).
+    - Cabeçalho do drawer: nome da loja + botão fechar (×).
+    - Lista de nav links: Início, Produtos, Serviços — destaque visual no link ativo (via `usePathname`).
+    - Rodapé do drawer: badge de status da loja (Aberto/Fechado), botão WhatsApp amarelo.
+    - Fecha ao: navegar (via `useEffect` no `pathname`), clicar no overlay, pressionar Escape, clicar no botão ×.
+    - Bloqueia scroll do `body` enquanto aberto.
+    - Atributos de acessibilidade: `aria-expanded`, `aria-controls`, `role="dialog"`, `aria-modal`, `aria-label`.
+  - Atualizado `src/components/layout/Header.tsx` — importa `MobileMenuToggle` e passa `whatsappUrl`, `storeOpen`, `hasSchedule` como props; remove o botão estático anterior.
+- **Decisões técnicas:**
+  - `Header.tsx` permanece Server Component assíncrono — sem `"use client"`, sem mudança no padrão de fetch.
+  - Transição puramente via Tailwind (`translate-x-full` ↔ `translate-x-0`) — sem biblioteca de animação.
+  - Props derivadas do Server Component (`whatsappUrl`, `storeOpen`, `hasSchedule`) evitam fetch duplicado no Client.
+  - `hasSchedule` como booleano (não o schedule completo) — menor serialização de props, suficiente para renderizar o badge.
+- **Verificações executadas:**
+  - `npx tsc --noEmit` — OK (exit 0)
+  - `npm run lint` — OK (sem warnings ou erros)
+  - `npm run build` — OK (15 páginas, todas `ƒ Dynamic`, exit 0)
+- **Arquivos criados:** `src/components/layout/MobileMenuToggle.tsx`
+- **Arquivos modificados:** `src/components/layout/Header.tsx`
 
 ### 2026-11-04 — Relatórios (`/admin/relatorios`)
 
