@@ -8,23 +8,44 @@
 
 ## 1. Estado atual do projeto
 
-- **Estágio:** Painel administrativo implementado. Next.js 15.5.29 + Supabase Auth via `@supabase/ssr`.
-- **Última atividade:** Implementação do painel admin com autenticação (login + dashboard + layout responsivo).
-- **Situação geral:** Deploy funcional na Vercel. Painel admin protegido por middleware. Variáveis de ambiente Supabase já configuradas na Vercel. Rota `/admin/login` funcional; após login correto, redireciona para `/admin` (dashboard). Aguarda criação do usuário admin no Supabase Auth para acesso real.
-- **Próxima etapa:** Criar usuário admin no Supabase Auth Dashboard para habilitar o acesso ao painel.
+- **Estágio:** Painel administrativo implementado e todas as rotas admin criadas. Next.js 15.5.29 + Supabase Auth via `@supabase/ssr`.
+- **Última atividade:** Correção do erro `MIDDLEWARE_INVOCATION_FAILED` (500) no middleware de autenticação.
+- **Situação geral:** Deploy funcional na Vercel. Painel admin com 7 rotas: `/admin`, `/admin/login`, `/admin/produtos`, `/admin/categorias`, `/admin/vitrines`, `/admin/configuracoes`, `/admin/relatorios`. Middleware resiliente a falhas do Supabase. Aguarda criação do usuário admin no Supabase Auth para acesso real.
+- **Próxima etapa:** Criar usuário admin no Supabase Auth Dashboard (Authentication → Users → Add User) e verificar variáveis de ambiente na Vercel.
 
 ---
 
 ## 2. Última atualização
 
 - **Data:** 2026-11-04
-- **Atividade:** Implementação do painel administrativo com Supabase Auth.
-- **Resultado:** Painel admin completo — login, dashboard, sidebar responsiva, header com logout, middleware de proteção de rotas. Build de produção passou sem erros de tipo ou lint.
-- **Situação:** Concluída. Aguarda criação do usuário admin no Supabase Auth para habilitar acesso.
+- **Atividade:** Correção do middleware (`MIDDLEWARE_INVOCATION_FAILED`) + criação das 5 sub-rotas admin.
+- **Resultado:** Middleware robusto com guarda de env vars e try-catch fail-secure. Build passou com 11 páginas. Deploy enviado ao GitHub.
+- **Situação:** Concluída. Aguarda criação do usuário admin no Supabase Auth.
 
 ---
 
 ## 3. Implementações concluídas
+
+### 2026-11-04 — Correção do middleware e criação das rotas admin
+
+- **Objetivo:** Corrigir erro `500 MIDDLEWARE_INVOCATION_FAILED` que impedia o acesso à rota `/admin`.
+- **Causa raiz:** Middleware sem tratamento de erros — se `NEXT_PUBLIC_SUPABASE_URL` ou `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` não estivessem definidas, ou se `createServerClient()` / `auth.getUser()` lançassem exceção, o middleware propagava o erro como 500.
+- **Correções aplicadas:**
+  - `src/middleware.ts` — adicionada guarda de env vars (`!supabaseUrl || !supabaseKey`) e `try-catch` em torno de toda a inicialização do Supabase e verificação de sessão. Comportamento fail-secure: qualquer falha redireciona para `/admin/login` em vez de retornar 500.
+  - `.env.example` — corrigido nome da variável: `NEXT_PUBLIC_SUPABASE_ANON_KEY` → `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+- **Sub-rotas criadas (stub "em desenvolvimento"):**
+  - `src/app/admin/produtos/page.tsx`
+  - `src/app/admin/categorias/page.tsx`
+  - `src/app/admin/vitrines/page.tsx`
+  - `src/app/admin/configuracoes/page.tsx`
+  - `src/app/admin/relatorios/page.tsx`
+- **Verificações executadas:**
+  - `npx tsc --noEmit` — OK (exit 0)
+  - `npm run lint` — OK (sem warnings ou erros)
+  - `npm run build` — OK (11 páginas geradas, middleware 95.3 kB, sem erros)
+- **Commits:** `bdfb5f6` (sub-rotas + tipos Vitrine), `32cb0cd` (fix middleware)
+- **Merge para main:** `d30bce5` → `e3ce048` (merge + fix)
+- **Observações:** Para acessar o painel, ainda é necessário criar um usuário no Supabase Auth Dashboard.
 
 ### 2026-11-04 — Painel administrativo (Supabase Auth)
 
@@ -135,11 +156,12 @@ _(nenhuma tarefa em andamento no momento)_
 ## 5. Pendências e problemas conhecidos
 
 - **Usuário admin não criado:** Para acessar o painel, é necessário criar um usuário no Supabase Auth Dashboard → Authentication → Users → Add User.
+- **Verificar env vars na Vercel:** Confirmar que `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` estão configuradas em Settings → Environment Variables na Vercel. O middleware agora é resiliente a falhas, mas o login real requer as variáveis corretas.
 - **Cloudinary não configurado:** Conta não criada. Sem upload de imagens disponível. Variáveis `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` não configuradas.
 - **WhatsApp number hardcoded:** `https://wa.me/55` (placeholder) em Header.tsx, Footer.tsx e page.tsx. Será substituído por dado do banco.
 - **Vitrine placeholder:** Skeletons de carregamento na homepage. Aguarda integração com Supabase e banco de dados.
-- **Schema do banco não criado:** Tabelas de produtos, categorias, vitrines, configurações não existem no Supabase.
-- **Rotas admin sem conteúdo:** `/admin/produtos`, `/admin/categorias`, `/admin/vitrines`, `/admin/configuracoes`, `/admin/relatorios` existem no sidebar mas ainda não têm páginas — retornam 404.
+- **Schema do banco não criado:** Tabelas de produtos, categorias, vitrines, configurações não existem no Supabase. Migration `supabase/migrations/001_vitrines.sql` criada, mas ainda não aplicada ao projeto Supabase.
+- **Sub-rotas admin sem conteúdo real:** `/admin/produtos`, `/admin/categorias`, `/admin/vitrines`, `/admin/configuracoes`, `/admin/relatorios` existem (retornam stub "em desenvolvimento"), mas aguardam integração com banco.
 - **Links de loja 404:** `/categoria`, `/produto/[slug]`, `/carrinho`, `/checkout` não implementados ainda.
 
 ---
