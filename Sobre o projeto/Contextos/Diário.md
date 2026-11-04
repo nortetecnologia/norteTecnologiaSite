@@ -8,23 +8,47 @@
 
 ## 1. Estado atual do projeto
 
-- **Estágio:** Admin completo (categorias, configurações, produtos, vitrines) + Páginas públicas implementadas (homepage dinâmica, listagem de categorias, produtos por categoria, detalhe do produto com CTA WhatsApp).
-- **Última atividade:** 2026-11-04 — Páginas públicas implementadas (Sprint Páginas Públicas).
+- **Estágio:** Admin completo + Páginas públicas + Carrinho localStorage + Checkout WhatsApp com mensagem formatada. Fluxo de compra completo implementado.
+- **Última atividade:** 2026-11-04 — Sprint Carrinho + Checkout.
 - **Situação geral:** Deploy funcional na Vercel. **Pendente:** aplicar todas as migrations (001–005) no Supabase SQL Editor em ordem. Após isso: configurar WhatsApp e horários, criar categorias, cadastrar produtos, montar vitrines.
-- **Próxima etapa:** Usuário aplica migrations → configura loja → cadastra produtos → implementar carrinho localStorage + checkout WhatsApp com mensagem formatada.
+- **Próxima etapa:** Usuário aplica migrations → configura loja → cadastra produtos → testar fluxo completo (produto → carrinho → checkout → WhatsApp). Depois: importação XML do CRM, Cloudinary upload, relatórios.
 
 ---
 
 ## 2. Última atualização
 
 - **Data:** 2026-11-04
-- **Atividade:** Páginas públicas do site (homepage dinâmica + rotas de categoria e produto).
-- **Resultado:** `src/components/ui/ProductCard.tsx` (card reutilizável), `src/app/page.tsx` (homepage com vitrines e categorias do DB, fallback estático), `src/app/categoria/page.tsx` (listagem de categorias), `src/app/categoria/[slug]/page.tsx` (produtos por categoria), `src/app/produto/[slug]/page.tsx` (detalhe com galeria, CTA WhatsApp pré-preenchido). Build passou (12 páginas, tsc OK, lint OK).
-- **Situação:** Código concluído. Páginas carregam dados do Supabase com fallback gracioso quando DB indisponível ou migrations não aplicadas.
+- **Atividade:** Carrinho localStorage + Checkout com mensagem WhatsApp formatada.
+- **Resultado:** `CartContext.tsx` (Provider + hook useCart + localStorage), `AddToCartButton.tsx`, `CartIcon.tsx`, `/carrinho` page, `/checkout` page com formulário completo. Fluxo: produto → carrinho → checkout (pagamento + modalidade + endereço + observações) → WhatsApp com mensagem automática. Build passou (14 páginas, tsc OK, lint OK).
+- **Situação:** Fluxo de compra completo. Carrinho persiste entre navegações. Não limpa após redirect ao WhatsApp (conforme regra de negócio).
 
 ---
 
 ## 3. Implementações concluídas
+
+### 2026-11-04 — Carrinho + Checkout (Sprint Carrinho)
+
+- **Objetivo:** Implementar o fluxo completo de compra: adicionar ao carrinho → revisar → finalizar com mensagem automática para o WhatsApp.
+- **Implementação:**
+  - Criado `src/contexts/CartContext.tsx` — Provider com `useReducer`; persiste em `localStorage` (try/catch para modo privado/bloqueado); hidrata estado no primeiro render; operações: `addItem` (soma quantity se produto já existe), `removeItem`, `updateQuantity` (remove se ≤0), `clearCart`; exporta `useCart` hook.
+  - Criado `src/components/ui/AddToCartButton.tsx` — Client Component com 2 botões: "Adicionar ao Carrinho" (adiciona e permanece na página) e "Comprar Agora" (adiciona e redireciona direto para `/checkout`).
+  - Criado `src/components/ui/CartIcon.tsx` — Client Component com ícone de carrinho e badge amarelo com contagem de itens; link para `/carrinho`.
+  - Criado `src/app/carrinho/CartPageClient.tsx` + `src/app/carrinho/page.tsx` — estado vazio com link para produtos; lista de itens com thumbnail, controle de quantidade (±), remoção; resumo com subtotais e total; botão "Finalizar Pedido" → `/checkout`; "Continuar Comprando" → `/categoria`.
+  - Criado `src/app/checkout/CheckoutClient.tsx` + `src/app/checkout/page.tsx` — `getStoreSettings()` no Server Component passa `whatsappNumber` ao Client; formulário: forma de pagamento (Dinheiro/PIX/Crédito/Débito, radio buttons visuais), modalidade (Retirada na Loja / Entrega), endereço condicional (obrigatório para entrega), observações. Função `buildWhatsAppMessage` monta mensagem formatada com todos os itens, totais, forma de pagamento e modalidade; `encodeURIComponent` na URL; `window.open` para nova aba. Botão desativado se endereço ausente na entrega.
+  - Atualizado `src/app/layout.tsx` — envolve `children` com `<CartProvider>`.
+  - Atualizado `src/components/layout/Header.tsx` — adiciona `<CartIcon />` ao lado do botão WhatsApp.
+  - Atualizado `src/app/produto/[slug]/page.tsx` — substitui CTA WhatsApp estático por `<AddToCartButton product={...} />`; remove imports `getStoreSettings` e `buildWhatsAppUrl` que não são mais necessários aqui.
+- **Decisões técnicas:**
+  - Carrinho não é limpo após redirect ao WhatsApp (regra de negócio: redirecionamento não equivale a pedido confirmado).
+  - Formas de pagamento como constante no código (Dinheiro/PIX/Crédito/Débito) — pendente configuração via admin no futuro.
+  - `localStorage` com try/catch completo — funciona mesmo em modo privado ou com cookies bloqueados.
+  - `window.open("...", "_blank", "noopener,noreferrer")` para segurança ao abrir WhatsApp.
+  - `whatsapp_number` é `string | null` (conforme tipo de `StoreSettingsData`) — tratado com `?? ""` antes de `.replace`.
+- **Verificações executadas:**
+  - `npx tsc --noEmit` — OK (exit 0); corrigido `string | null` em `CheckoutClientProps`.
+  - `npx next build` — OK (14 páginas, todas `ƒ Dynamic`, exit 0).
+- **Arquivos criados:** `src/contexts/CartContext.tsx`, `src/components/ui/AddToCartButton.tsx`, `src/components/ui/CartIcon.tsx`, `src/app/carrinho/CartPageClient.tsx`, `src/app/carrinho/page.tsx`, `src/app/checkout/CheckoutClient.tsx`, `src/app/checkout/page.tsx`
+- **Arquivos modificados:** `src/app/layout.tsx`, `src/components/layout/Header.tsx`, `src/app/produto/[slug]/page.tsx`
 
 ### 2026-11-04 — Páginas públicas (Sprint Páginas Públicas)
 

@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { getStoreSettings, buildWhatsAppUrl } from "@/lib/store-settings";
 import { isStoreOpen } from "@/lib/business-hours";
+import { CartIcon } from "@/components/ui/CartIcon";
 
 export default async function Header() {
   const settings = await getStoreSettings();
@@ -47,6 +48,7 @@ export default async function Header() {
         </nav>
 
         <div className="flex items-center gap-3">
+          <CartIcon />
           {settings.business_hours_schedule && (
             <span
               className={`hidden sm:inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${
