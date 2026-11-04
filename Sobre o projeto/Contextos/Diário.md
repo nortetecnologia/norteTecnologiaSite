@@ -8,23 +8,57 @@
 
 ## 1. Estado atual do projeto
 
-- **Estágio:** Estrutura inicial em produção na Vercel. Next.js 15.5.29. Sem banco de dados configurado.
-- **Última atividade:** Atualização de segurança do Next.js (15.0.3 → 15.5.29) e correção do UTF-8 BOM no package.json.
-- **Situação geral:** Deploy funcional na Vercel (repositório público, sem Co-Authored-By, sem BOM). Homepage estática com layout base visível em produção. Aguardando criação do projeto Supabase e conta Cloudinary para avançar com funcionalidades reais.
-- **Próxima etapa:** Criar projeto no Supabase, obter credenciais e configurar variáveis de ambiente na Vercel.
+- **Estágio:** Painel administrativo implementado. Next.js 15.5.29 + Supabase Auth via `@supabase/ssr`.
+- **Última atividade:** Implementação do painel admin com autenticação (login + dashboard + layout responsivo).
+- **Situação geral:** Deploy funcional na Vercel. Painel admin protegido por middleware. Variáveis de ambiente Supabase já configuradas na Vercel. Rota `/admin/login` funcional; após login correto, redireciona para `/admin` (dashboard). Aguarda criação do usuário admin no Supabase Auth para acesso real.
+- **Próxima etapa:** Criar usuário admin no Supabase Auth Dashboard para habilitar o acesso ao painel.
 
 ---
 
 ## 2. Última atualização
 
 - **Data:** 2026-11-04
-- **Atividade:** Atualização do Next.js de 15.0.3 para 15.5.29 (vulnerabilidade de segurança detectada pela Vercel).
-- **Resultado:** Commit `67c4786` — `package.json` e `package-lock.json` atualizados. Build de produção passou sem erros. Push realizado para `origin/main`.
-- **Situação:** Concluída. Pipeline Vercel desbloqueado e funcional.
+- **Atividade:** Implementação do painel administrativo com Supabase Auth.
+- **Resultado:** Painel admin completo — login, dashboard, sidebar responsiva, header com logout, middleware de proteção de rotas. Build de produção passou sem erros de tipo ou lint.
+- **Situação:** Concluída. Aguarda criação do usuário admin no Supabase Auth para habilitar acesso.
 
 ---
 
 ## 3. Implementações concluídas
+
+### 2026-11-04 — Painel administrativo (Supabase Auth)
+
+- **Objetivo:** Implementar painel admin acessível em `/admin` com autenticação via Supabase Auth.
+- **Implementação:**
+  - Instalado `@supabase/supabase-js@^2.119.0` e `@supabase/ssr@^0.12.7`.
+  - Criado `src/lib/supabase/client.ts` — client-side Supabase client para uso em Client Components.
+  - Criado `src/lib/supabase/server.ts` — server-side Supabase client para Server Components e Actions.
+  - Criado `src/middleware.ts` — protege todas as rotas `/admin/*`, redireciona não-autenticados para `/admin/login` e autenticados que acessam `/admin/login` para `/admin`.
+  - Criado `src/app/admin/login/page.tsx` — página de login com email/password, estado de loading/erro, design sistema escuro com CTA amarelo.
+  - Criado `src/app/admin/actions.ts` — Server Action `logout()` para encerrar sessão e redirecionar para `/admin/login`.
+  - Criado `src/app/admin/layout.tsx` — Server Component que verifica autenticação e renderiza layout.
+  - Criado `src/app/admin/AdminLayoutClient.tsx` — Client Component com sidebar desktop fixa, overlay mobile para sidebar, header fixo.
+  - Criado `src/components/admin/AdminSidebar.tsx` — sidebar com links destacados (ativo = amarelo), ícones SVG inline para: Dashboard, Produtos, Categorias, Vitrines, Configurações, Relatórios.
+  - Criado `src/components/admin/AdminHeader.tsx` — exibe email do usuário e botão de logout.
+  - Criado `src/app/admin/page.tsx` — dashboard com saudação personalizada e cards de acesso rápido.
+  - Atualizado `.eslintrc.json` com `"root": true` para evitar conflito com config do diretório pai (issue de worktree).
+- **Arquivos criados:**
+  - `src/lib/supabase/client.ts`
+  - `src/lib/supabase/server.ts`
+  - `src/middleware.ts`
+  - `src/app/admin/login/page.tsx`
+  - `src/app/admin/actions.ts`
+  - `src/app/admin/layout.tsx`
+  - `src/app/admin/AdminLayoutClient.tsx`
+  - `src/app/admin/page.tsx`
+  - `src/components/admin/AdminSidebar.tsx`
+  - `src/components/admin/AdminHeader.tsx`
+- **Variável de ambiente:** Usa `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (novo nome Supabase, equivalente ao antigo `NEXT_PUBLIC_SUPABASE_ANON_KEY`).
+- **Verificações executadas:**
+  - `npx tsc --noEmit` — OK (sem erros de tipo)
+  - `npm run lint` — OK (sem warnings ou erros ESLint)
+  - `npm run build` — OK (`/admin` e `/admin/login` gerados como rotas dinâmicas, middleware 92.9 kB)
+- **Observações:** Para acessar o painel, é necessário criar um usuário no Supabase Auth Dashboard (Authentication → Users → Add User).
 
 ### 2026-11-04 — Correções no pipeline de deploy (Vercel)
 
@@ -94,18 +128,19 @@
 
 ## 4. Implementações em andamento
 
-_(nenhuma tarefa em andamento no momento — aguardando configuração de serviços externos)_
+_(nenhuma tarefa em andamento no momento)_
 
 ---
 
 ## 5. Pendências e problemas conhecidos
 
-- **Variáveis de ambiente não configuradas na Vercel:** `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SECRET_KEY`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` — precisam ser adicionadas no painel da Vercel após a criação dos projetos Supabase e Cloudinary.
-- **Supabase não configurado:** Projeto não criado. Sem tabelas, sem schema, sem autenticação.
-- **Cloudinary não configurado:** Conta não criada. Sem upload de imagens disponível.
-- **WhatsApp number hardcoded:** `https://wa.me/55` (placeholder) em Header.tsx, Footer.tsx e page.tsx. Será substituído por dado do banco quando o Supabase estiver configurado.
-- **Vitrine placeholder:** Skeletons de carregamento na homepage. Aguarda integração com Supabase.
-- **Links de navegação 404:** `/categoria`, `/produto/[slug]`, `/carrinho`, `/checkout` e `/admin` não implementados ainda.
+- **Usuário admin não criado:** Para acessar o painel, é necessário criar um usuário no Supabase Auth Dashboard → Authentication → Users → Add User.
+- **Cloudinary não configurado:** Conta não criada. Sem upload de imagens disponível. Variáveis `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` não configuradas.
+- **WhatsApp number hardcoded:** `https://wa.me/55` (placeholder) em Header.tsx, Footer.tsx e page.tsx. Será substituído por dado do banco.
+- **Vitrine placeholder:** Skeletons de carregamento na homepage. Aguarda integração com Supabase e banco de dados.
+- **Schema do banco não criado:** Tabelas de produtos, categorias, vitrines, configurações não existem no Supabase.
+- **Rotas admin sem conteúdo:** `/admin/produtos`, `/admin/categorias`, `/admin/vitrines`, `/admin/configuracoes`, `/admin/relatorios` existem no sidebar mas ainda não têm páginas — retornam 404.
+- **Links de loja 404:** `/categoria`, `/produto/[slug]`, `/carrinho`, `/checkout` não implementados ainda.
 
 ---
 
