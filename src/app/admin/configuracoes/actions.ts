@@ -43,6 +43,26 @@ export async function saveStoreSettings(
     }
   }
 
+  let paymentMethods: string[] = ["Dinheiro", "PIX", "Cartão de Crédito", "Cartão de Débito"];
+  const paymentMethodsRaw = formData.get("payment_methods") as string;
+  if (paymentMethodsRaw) {
+    try {
+      const parsed = JSON.parse(paymentMethodsRaw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        paymentMethods = parsed
+          .map((m: unknown) => (typeof m === "string" ? m.trim() : ""))
+          .filter(Boolean)
+          .slice(0, 10);
+      }
+    } catch {
+      return { error: "Dados de formas de pagamento inválidos. Recarregue a página." };
+    }
+  }
+
+  if (paymentMethods.length === 0) {
+    return { error: "É necessário ao menos uma forma de pagamento." };
+  }
+
   const payload = {
     store_name:
       (formData.get("store_name") as string)?.trim() || "Norte Tecnologia",
@@ -52,6 +72,7 @@ export async function saveStoreSettings(
     city: (formData.get("city") as string)?.trim() || null,
     state_abbr: (formData.get("state_abbr") as string)?.trim() || "PA",
     business_hours_schedule: businessHoursSchedule,
+    payment_methods: paymentMethods,
     updated_at: new Date().toISOString(),
   };
 

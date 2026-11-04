@@ -38,7 +38,10 @@ export default async function CheckoutPage() {
         <section className="px-4 py-10 lg:px-8">
           <div className="mx-auto max-w-content">
             <h1 className="mb-8 text-3xl font-bold text-white">Finalizar Pedido</h1>
-            <CheckoutClient whatsappNumber={settings.whatsapp_number} />
+            <CheckoutClient
+              whatsappNumber={settings.whatsapp_number}
+              paymentMethods={settings.payment_methods}
+            />
           </div>
         </section>
       </main>

@@ -1,6 +1,9 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import type { WeekSchedule } from "@/lib/business-hours";
+import { DEFAULT_PAYMENT_METHODS } from "@/lib/payment-methods";
+
+export { DEFAULT_PAYMENT_METHODS };
 
 export interface StoreSettingsData {
   store_name: string;
@@ -10,6 +13,7 @@ export interface StoreSettingsData {
   city: string | null;
   state_abbr: string | null;
   business_hours_schedule: WeekSchedule | null;
+  payment_methods: string[];
 }
 
 const DEFAULT: StoreSettingsData = {
@@ -20,6 +24,7 @@ const DEFAULT: StoreSettingsData = {
   city: null,
   state_abbr: "PA",
   business_hours_schedule: null,
+  payment_methods: DEFAULT_PAYMENT_METHODS,
 };
 
 // cache() deduplicates calls within a single render pass (request-level)
@@ -29,12 +34,17 @@ export const getStoreSettings = cache(async (): Promise<StoreSettingsData> => {
     const { data, error } = await supabase
       .from("store_settings")
       .select(
-        "store_name, whatsapp_number, email, address, city, state_abbr, business_hours_schedule"
+        "store_name, whatsapp_number, email, address, city, state_abbr, business_hours_schedule, payment_methods"
       )
       .single();
 
     if (error || !data) return DEFAULT;
-    return data as StoreSettingsData;
+    const result = data as StoreSettingsData;
+    // Fallback para migration ainda não aplicada (coluna ausente retorna undefined)
+    if (!Array.isArray(result.payment_methods) || result.payment_methods.length === 0) {
+      result.payment_methods = DEFAULT_PAYMENT_METHODS;
+    }
+    return result;
   } catch {
     return DEFAULT;
   }

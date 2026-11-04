@@ -5,12 +5,11 @@ import Link from "next/link";
 import { useCart } from "@/contexts/CartContext";
 import { formatCurrency } from "@/lib/utils";
 
-const PAYMENT_METHODS = ["Dinheiro", "PIX", "Cartão de Crédito", "Cartão de Débito"];
-
 type DeliveryMode = "retirada" | "entrega";
 
 interface CheckoutClientProps {
   whatsappNumber: string | null;
+  paymentMethods: string[];
 }
 
 function buildWhatsAppMessage(params: {
@@ -52,10 +51,10 @@ function buildWhatsAppMessage(params: {
   return lines.join("\n");
 }
 
-export function CheckoutClient({ whatsappNumber }: CheckoutClientProps) {
+export function CheckoutClient({ whatsappNumber, paymentMethods }: CheckoutClientProps) {
   const { items, totalPrice } = useCart();
 
-  const [paymentMethod, setPaymentMethod] = useState(PAYMENT_METHODS[0]);
+  const [paymentMethod, setPaymentMethod] = useState(paymentMethods[0] ?? "Dinheiro");
   const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>("retirada");
   const [address, setAddress] = useState("");
   const [observations, setObservations] = useState("");
@@ -103,7 +102,7 @@ export function CheckoutClient({ whatsappNumber }: CheckoutClientProps) {
         <fieldset className="rounded-lg border border-brand-gray-mid bg-brand-gray-dark p-6">
           <legend className="mb-4 text-base font-semibold text-white px-1">Forma de Pagamento</legend>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {PAYMENT_METHODS.map((method) => (
+            {paymentMethods.map((method) => (
               <label
                 key={method}
                 className={`flex cursor-pointer items-center justify-center rounded-md border px-3 py-2.5 text-sm font-medium transition-colors ${

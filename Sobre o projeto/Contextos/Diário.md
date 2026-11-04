@@ -8,23 +8,46 @@
 
 ## 1. Estado atual do projeto
 
-- **Estágio:** Admin completo + Páginas públicas + Carrinho localStorage + Checkout WhatsApp com mensagem formatada. Fluxo de compra completo implementado.
-- **Última atividade:** 2026-11-04 — Sprint Carrinho + Checkout.
-- **Situação geral:** Deploy funcional na Vercel. **Pendente:** aplicar todas as migrations (001–005) no Supabase SQL Editor em ordem. Após isso: configurar WhatsApp e horários, criar categorias, cadastrar produtos, montar vitrines.
-- **Próxima etapa:** Usuário aplica migrations → configura loja → cadastra produtos → testar fluxo completo (produto → carrinho → checkout → WhatsApp). Depois: importação XML do CRM, Cloudinary upload, relatórios.
+- **Estágio:** Admin completo + Páginas públicas + Carrinho localStorage + Checkout WhatsApp + Formas de pagamento configuráveis + Rota subcategoria. Fluxo de compra completo implementado.
+- **Última atividade:** 2026-11-04 — Sprint Formas de Pagamento Dinâmicas + Rota Subcategoria.
+- **Situação geral:** Deploy funcional na Vercel. **Pendente:** aplicar todas as migrations (001–006) no Supabase SQL Editor em ordem. Após isso: configurar WhatsApp e horários, formas de pagamento, criar categorias/subcategorias, cadastrar produtos, montar vitrines.
+- **Próxima etapa:** Usuário aplica migrations → configura loja → testar fluxo completo. Depois: Cloudinary upload, importação XML do CRM, relatórios.
 
 ---
 
 ## 2. Última atualização
 
 - **Data:** 2026-11-04
-- **Atividade:** Carrinho localStorage + Checkout com mensagem WhatsApp formatada.
-- **Resultado:** `CartContext.tsx` (Provider + hook useCart + localStorage), `AddToCartButton.tsx`, `CartIcon.tsx`, `/carrinho` page, `/checkout` page com formulário completo. Fluxo: produto → carrinho → checkout (pagamento + modalidade + endereço + observações) → WhatsApp com mensagem automática. Build passou (14 páginas, tsc OK, lint OK).
-- **Situação:** Fluxo de compra completo. Carrinho persiste entre navegações. Não limpa após redirect ao WhatsApp (conforme regra de negócio).
+- **Atividade:** Formas de pagamento configuráveis via admin + Rota `/categoria/[slug]/[subcategoria]`.
+- **Resultado:** Formas de pagamento saíram do hardcode para o banco (`store_settings.payment_methods TEXT[]`). Admin pode gerenciar via `/admin/configuracoes`. Checkout carrega do banco. Rota subcategoria criada seguindo padrão da categoria. Build passou (15 páginas, tsc OK, lint OK).
+- **Situação:** Todas as rotas públicas documentadas em `Rotas.md` implementadas. Pagamentos configuráveis dinamicamente.
 
 ---
 
 ## 3. Implementações concluídas
+
+### 2026-11-04 — Formas de Pagamento Dinâmicas + Rota Subcategoria
+
+- **Objetivo:** Tornar as formas de pagamento configuráveis pelo admin e implementar a rota `/categoria/[slug]/[subcategoria]` definida em `Rotas.md`.
+- **Implementação:**
+  - Criado `supabase/migrations/006_payment_methods.sql` — adiciona `payment_methods TEXT[] NOT NULL DEFAULT ARRAY['Dinheiro', 'PIX', 'Cartão de Crédito', 'Cartão de Débito']` à tabela `store_settings`.
+  - Criado `src/lib/payment-methods.ts` — constante `DEFAULT_PAYMENT_METHODS` extraída para arquivo próprio (evita que Client Components importem código server-only via `store-settings.ts`).
+  - Atualizado `src/lib/store-settings.ts` — adicionado `payment_methods: string[]` à interface `StoreSettingsData` e ao DEFAULT; query SELECT inclui `payment_methods`; fallback: se coluna ausente (migration não aplicada), usa `DEFAULT_PAYMENT_METHODS`; re-exporta a constante.
+  - Atualizado `src/app/admin/configuracoes/actions.ts` — lê `payment_methods` do FormData (JSON), valida: array não-vazio, strings trimmadas, máx. 10 itens. Inclui no payload do UPDATE.
+  - Atualizado `src/app/admin/configuracoes/ConfiguracoesForm.tsx` — nova seção "Formas de Pagamento" com editor de chips: lista visual dos métodos atuais com botão de remoção (mínimo 1 item), input + botão "Adicionar" (máx. 10), Enter para adicionar; `input hidden` serializado como JSON para o Server Action.
+  - Atualizado `src/app/checkout/page.tsx` — passa `payment_methods` do settings para `CheckoutClient`.
+  - Atualizado `src/app/checkout/CheckoutClient.tsx` — recebe `paymentMethods: string[]` em vez da constante hardcoded; inicial do `useState` usa `paymentMethods[0] ?? "Dinheiro"`.
+  - Criado `src/app/categoria/[slug]/[subcategoria]/page.tsx` — Server Component com `generateMetadata`; busca categoria por slug, subcategoria por slug dentro da categoria (com `category_id`), produtos por `subcategory_id` (apenas ativos); `notFound()` quando categoria ou subcategoria não existe; breadcrumb completo (Início / Categorias / {categoria} / {subcategoria}); label da categoria em brand-yellow acima do H1; grid `ProductCard` idêntico à rota de categoria.
+- **Decisões técnicas:**
+  - Constante `DEFAULT_PAYMENT_METHODS` em arquivo separado `src/lib/payment-methods.ts` — resolve problema de tree-shaking/bundling onde Client Components não podem importar código que usa `next/headers` indiretamente.
+  - Rota subcategoria filtra `is_active = true` nos produtos (rota categoria não filtra — mantido por consistência com implementação anterior; subcategoria segue regra de negócio 2.3).
+  - Fallback em `getStoreSettings()` protege contra banco sem a migration 006 aplicada.
+- **Verificações executadas:**
+  - `npx tsc --noEmit` — OK (exit 0)
+  - `npm run lint` — OK (sem warnings ou erros)
+  - `npm run build` — OK (15 páginas, todas `ƒ Dynamic`, exit 0)
+- **Arquivos criados:** `supabase/migrations/006_payment_methods.sql`, `src/lib/payment-methods.ts`, `src/app/categoria/[slug]/[subcategoria]/page.tsx`
+- **Arquivos modificados:** `src/lib/store-settings.ts`, `src/app/admin/configuracoes/actions.ts`, `src/app/admin/configuracoes/ConfiguracoesForm.tsx`, `src/app/checkout/page.tsx`, `src/app/checkout/CheckoutClient.tsx`
 
 ### 2026-11-04 — Carrinho + Checkout (Sprint Carrinho)
 
