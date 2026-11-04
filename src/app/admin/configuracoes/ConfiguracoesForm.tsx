@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { saveStoreSettings, type SettingsActionState } from "./actions";
 import type { StoreSettingsData } from "@/lib/store-settings";
+import { DEFAULT_PAYMENT_METHODS } from "@/lib/payment-methods";
 import { BusinessHoursEditor } from "./BusinessHoursEditor";
 
 interface Props {
@@ -14,6 +15,23 @@ export function ConfiguracoesForm({ initialData }: Props) {
     saveStoreSettings,
     null
   );
+
+  const [paymentMethods, setPaymentMethods] = useState<string[]>(
+    initialData.payment_methods?.length ? initialData.payment_methods : DEFAULT_PAYMENT_METHODS
+  );
+  const [newMethod, setNewMethod] = useState("");
+
+  function addPaymentMethod() {
+    const trimmed = newMethod.trim();
+    if (!trimmed || paymentMethods.includes(trimmed) || paymentMethods.length >= 10) return;
+    setPaymentMethods([...paymentMethods, trimmed]);
+    setNewMethod("");
+  }
+
+  function removePaymentMethod(method: string) {
+    if (paymentMethods.length <= 1) return;
+    setPaymentMethods(paymentMethods.filter((m) => m !== method));
+  }
 
   return (
     <form action={action} className="space-y-8">
@@ -156,6 +174,65 @@ export function ConfiguracoesForm({ initialData }: Props) {
           Horário de Funcionamento
         </h2>
         <BusinessHoursEditor initialSchedule={initialData.business_hours_schedule} />
+      </section>
+
+      {/* Formas de Pagamento */}
+      <section className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-6">
+        <h2 className="text-white font-semibold mb-5 flex items-center gap-2">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffd600" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
+            <line x1="1" y1="10" x2="23" y2="10" />
+          </svg>
+          Formas de Pagamento
+        </h2>
+
+        {/* hidden input serializado para o Server Action */}
+        <input type="hidden" name="payment_methods" value={JSON.stringify(paymentMethods)} />
+
+        <div className="mb-4 flex flex-wrap gap-2">
+          {paymentMethods.map((method) => (
+            <span
+              key={method}
+              className="inline-flex items-center gap-1.5 rounded-full border border-[#2a2a2a] bg-[#0a0a0a] px-3 py-1 text-sm text-white"
+            >
+              {method}
+              <button
+                type="button"
+                onClick={() => removePaymentMethod(method)}
+                disabled={paymentMethods.length <= 1}
+                className="text-[#6b7280] hover:text-red-400 disabled:cursor-not-allowed disabled:opacity-30 transition-colors"
+                aria-label={`Remover ${method}`}
+              >
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+
+        {paymentMethods.length < 10 && (
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={newMethod}
+              onChange={(e) => setNewMethod(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addPaymentMethod(); } }}
+              placeholder="Nova forma de pagamento…"
+              maxLength={40}
+              className="flex-1 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg px-4 py-2 text-white text-sm placeholder-[#4b5563] focus:outline-none focus:border-[#ffd600] focus:ring-1 focus:ring-[#ffd600] transition-colors"
+            />
+            <button
+              type="button"
+              onClick={addPaymentMethod}
+              disabled={!newMethod.trim()}
+              className="rounded-lg border border-[#ffd600] px-4 py-2 text-sm font-medium text-[#ffd600] hover:bg-[#ffd600]/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Adicionar
+            </button>
+          </div>
+        )}
+        <p className="mt-2 text-xs text-[#6b7280]">
+          Máximo 10 formas de pagamento. Ao menos uma é obrigatória.
+        </p>
       </section>
 
       {/* Salvar */}
