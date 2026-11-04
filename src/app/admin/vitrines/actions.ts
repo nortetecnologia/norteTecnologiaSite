@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient, logAdminError } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 
 export type VitrineActionResult = { success?: boolean; error?: string };
@@ -12,7 +12,10 @@ async function getAuthClient() {
     data: { user },
     error,
   } = await anonClient.auth.getUser();
-  if (error || !user) throw new Error("Não autorizado.");
+  if (error || !user) {
+    console.error("[admin/vitrines] Auth falhou:", error?.message ?? "sem usuário");
+    throw new Error("Não autorizado.");
+  }
   return createAdminClient();
 }
 
@@ -36,11 +39,12 @@ export async function updateVitrineTitle(
       .update({ title: trimmed, updated_at: new Date().toISOString() })
       .eq("id", id);
 
-    if (error) return { error: "Erro ao atualizar título da vitrine." };
+    if (error) return { error: logAdminError("updateVitrineTitle", error) };
 
     revalidate();
     return { success: true };
   } catch (e) {
+    console.error("[admin/vitrines] updateVitrineTitle exception:", e);
     return { error: e instanceof Error ? e.message : "Erro inesperado." };
   }
 }
@@ -57,11 +61,12 @@ export async function toggleVitrineActive(
       .update({ is_active: isActive, updated_at: new Date().toISOString() })
       .eq("id", id);
 
-    if (error) return { error: "Erro ao atualizar status da vitrine." };
+    if (error) return { error: logAdminError("toggleVitrineActive", error) };
 
     revalidate();
     return { success: true };
   } catch (e) {
+    console.error("[admin/vitrines] toggleVitrineActive exception:", e);
     return { error: e instanceof Error ? e.message : "Erro inesperado." };
   }
 }
@@ -92,12 +97,13 @@ export async function addProductToVitrine(
     if (error) {
       if (error.code === "23505")
         return { error: "Este produto já está nesta vitrine." };
-      return { error: "Erro ao adicionar produto à vitrine." };
+      return { error: logAdminError("addProductToVitrine", error) };
     }
 
     revalidate();
     return { success: true };
   } catch (e) {
+    console.error("[admin/vitrines] addProductToVitrine exception:", e);
     return { error: e instanceof Error ? e.message : "Erro inesperado." };
   }
 }
@@ -113,11 +119,12 @@ export async function removeProductFromVitrine(
       .delete()
       .eq("id", vitrineProductId);
 
-    if (error) return { error: "Erro ao remover produto da vitrine." };
+    if (error) return { error: logAdminError("removeProductFromVitrine", error) };
 
     revalidate();
     return { success: true };
   } catch (e) {
+    console.error("[admin/vitrines] removeProductFromVitrine exception:", e);
     return { error: e instanceof Error ? e.message : "Erro inesperado." };
   }
 }
@@ -137,7 +144,7 @@ export async function moveVitrineProduct(
       .eq("vitrine_id", vitrineId)
       .order("position", { ascending: true });
 
-    if (fetchError || !items) return { error: "Erro ao buscar produtos da vitrine." };
+    if (fetchError || !items) return { error: fetchError ? logAdminError("moveVitrineProduct/fetch", fetchError) : "Nenhum produto encontrado." };
 
     const index = items.findIndex((item) => item.id === vitrineProductId);
     if (index === -1) return { error: "Produto não encontrado na vitrine." };
@@ -159,11 +166,12 @@ export async function moveVitrineProduct(
       .update({ position: current.position })
       .eq("id", neighbor.id);
 
-    if (e1 || e2) return { error: "Erro ao reordenar produtos." };
+    if (e1 || e2) return { error: logAdminError("moveVitrineProduct/swap", e1 ?? e2!) };
 
     revalidate();
     return { success: true };
   } catch (e) {
+    console.error("[admin/vitrines] moveVitrineProduct exception:", e);
     return { error: e instanceof Error ? e.message : "Erro inesperado." };
   }
 }

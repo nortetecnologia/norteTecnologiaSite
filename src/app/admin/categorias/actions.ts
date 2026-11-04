@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient, logAdminError } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 
 export type CategoryActionResult = { success?: boolean; error?: string };
@@ -21,7 +21,10 @@ async function getAuthClient() {
     data: { user },
     error,
   } = await anonClient.auth.getUser();
-  if (error || !user) throw new Error("Não autorizado.");
+  if (error || !user) {
+    console.error("[admin/categorias] Auth falhou:", error?.message ?? "sem usuário");
+    throw new Error("Não autorizado.");
+  }
   return createAdminClient();
 }
 
@@ -48,12 +51,13 @@ export async function createCategory(
     if (error) {
       if (error.code === "23505")
         return { error: "Já existe uma categoria com esse nome." };
-      return { error: "Erro ao criar categoria. Tente novamente." };
+      return { error: logAdminError("createCategory", error) };
     }
 
     revalidate();
     return { success: true };
   } catch (e) {
+    console.error("[admin/categorias] createCategory exception:", e);
     return { error: e instanceof Error ? e.message : "Erro inesperado." };
   }
 }
@@ -77,12 +81,13 @@ export async function updateCategory(
     if (error) {
       if (error.code === "23505")
         return { error: "Já existe uma categoria com esse nome." };
-      return { error: "Erro ao atualizar categoria. Tente novamente." };
+      return { error: logAdminError("updateCategory", error) };
     }
 
     revalidate();
     return { success: true };
   } catch (e) {
+    console.error("[admin/categorias] updateCategory exception:", e);
     return { error: e instanceof Error ? e.message : "Erro inesperado." };
   }
 }
@@ -99,7 +104,7 @@ export async function deleteCategory(
       .select("id", { count: "exact", head: true })
       .eq("category_id", id);
 
-    if (subErr) return { error: "Erro ao verificar subcategorias." };
+    if (subErr) return { error: logAdminError("deleteCategory/subcheck", subErr) };
 
     if (subCount && subCount > 0) {
       return {
@@ -113,7 +118,7 @@ export async function deleteCategory(
       .select("id", { count: "exact", head: true })
       .eq("category_id", id);
 
-    if (prodErr) return { error: "Erro ao verificar produtos vinculados." };
+    if (prodErr) return { error: logAdminError("deleteCategory/prodcheck", prodErr) };
 
     if (prodCount && prodCount > 0) {
       return {
@@ -126,11 +131,12 @@ export async function deleteCategory(
       .delete()
       .eq("id", id);
 
-    if (error) return { error: "Erro ao excluir categoria. Tente novamente." };
+    if (error) return { error: logAdminError("deleteCategory", error) };
 
     revalidate();
     return { success: true };
   } catch (e) {
+    console.error("[admin/categorias] deleteCategory exception:", e);
     return { error: e instanceof Error ? e.message : "Erro inesperado." };
   }
 }
@@ -155,12 +161,13 @@ export async function createSubcategory(
     if (error) {
       if (error.code === "23505")
         return { error: "Já existe uma subcategoria com esse nome." };
-      return { error: "Erro ao criar subcategoria. Tente novamente." };
+      return { error: logAdminError("createSubcategory", error) };
     }
 
     revalidate();
     return { success: true };
   } catch (e) {
+    console.error("[admin/categorias] createSubcategory exception:", e);
     return { error: e instanceof Error ? e.message : "Erro inesperado." };
   }
 }
@@ -184,12 +191,13 @@ export async function updateSubcategory(
     if (error) {
       if (error.code === "23505")
         return { error: "Já existe uma subcategoria com esse nome." };
-      return { error: "Erro ao atualizar subcategoria. Tente novamente." };
+      return { error: logAdminError("updateSubcategory", error) };
     }
 
     revalidate();
     return { success: true };
   } catch (e) {
+    console.error("[admin/categorias] updateSubcategory exception:", e);
     return { error: e instanceof Error ? e.message : "Erro inesperado." };
   }
 }
@@ -206,7 +214,7 @@ export async function deleteSubcategory(
       .select("id", { count: "exact", head: true })
       .eq("subcategory_id", id);
 
-    if (countErr) return { error: "Erro ao verificar produtos vinculados." };
+    if (countErr) return { error: logAdminError("deleteSubcategory/prodcheck", countErr) };
 
     if (count && count > 0) {
       return {
@@ -219,12 +227,12 @@ export async function deleteSubcategory(
       .delete()
       .eq("id", id);
 
-    if (error)
-      return { error: "Erro ao excluir subcategoria. Tente novamente." };
+    if (error) return { error: logAdminError("deleteSubcategory", error) };
 
     revalidate();
     return { success: true };
   } catch (e) {
+    console.error("[admin/categorias] deleteSubcategory exception:", e);
     return { error: e instanceof Error ? e.message : "Erro inesperado." };
   }
 }

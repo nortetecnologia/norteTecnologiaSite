@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient, logAdminError } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 
 export type SettingsActionState = {
@@ -85,7 +85,7 @@ export async function saveStoreSettings(
     .eq("id", 1);
 
   if (error) {
-    return { error: "Erro ao salvar. Tente novamente." };
+    return { error: logAdminError("saveStoreSettings", error) };
   }
 
   revalidatePath("/", "layout");
