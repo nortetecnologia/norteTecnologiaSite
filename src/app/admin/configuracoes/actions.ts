@@ -33,6 +33,16 @@ export async function saveStoreSettings(
     };
   }
 
+  let businessHoursSchedule: unknown = null;
+  const scheduleRaw = formData.get("business_hours_schedule") as string;
+  if (scheduleRaw) {
+    try {
+      businessHoursSchedule = JSON.parse(scheduleRaw);
+    } catch {
+      return { error: "Dados de horário inválidos. Recarregue a página." };
+    }
+  }
+
   const payload = {
     store_name:
       (formData.get("store_name") as string)?.trim() || "Norte Tecnologia",
@@ -41,7 +51,7 @@ export async function saveStoreSettings(
     address: (formData.get("address") as string)?.trim() || null,
     city: (formData.get("city") as string)?.trim() || null,
     state_abbr: (formData.get("state_abbr") as string)?.trim() || "PA",
-    business_hours: (formData.get("business_hours") as string)?.trim() || null,
+    business_hours_schedule: businessHoursSchedule,
     updated_at: new Date().toISOString(),
   };
 

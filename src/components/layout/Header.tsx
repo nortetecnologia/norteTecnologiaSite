@@ -1,10 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getStoreSettings, buildWhatsAppUrl } from "@/lib/store-settings";
+import { isStoreOpen } from "@/lib/business-hours";
 
 export default async function Header() {
   const settings = await getStoreSettings();
   const whatsappUrl = buildWhatsAppUrl(settings.whatsapp_number);
+  const storeOpen = isStoreOpen(settings.business_hours_schedule);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-brand-gray-mid bg-brand-black/95 backdrop-blur-sm">
@@ -45,6 +47,23 @@ export default async function Header() {
         </nav>
 
         <div className="flex items-center gap-3">
+          {settings.business_hours_schedule && (
+            <span
+              className={`hidden sm:inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${
+                storeOpen
+                  ? "bg-green-900/30 text-green-400 border border-green-800/40"
+                  : "bg-red-900/30 text-red-400 border border-red-800/40"
+              }`}
+            >
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  storeOpen ? "bg-green-400" : "bg-red-400"
+                }`}
+                aria-hidden="true"
+              />
+              {storeOpen ? "Aberto agora" : "Fechada"}
+            </span>
+          )}
           <a
             href={whatsappUrl}
             target="_blank"
