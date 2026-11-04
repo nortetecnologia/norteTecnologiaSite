@@ -1,7 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
+import { getStoreSettings, buildWhatsAppUrl } from "@/lib/store-settings";
 
-export default function Header() {
+export default async function Header() {
+  const settings = await getStoreSettings();
+  const whatsappUrl = buildWhatsAppUrl(settings.whatsapp_number);
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-brand-gray-mid bg-brand-black/95 backdrop-blur-sm">
       <div className="mx-auto flex h-[72px] max-w-content items-center justify-between px-4 lg:px-8">
@@ -42,7 +46,7 @@ export default function Header() {
 
         <div className="flex items-center gap-3">
           <a
-            href="https://wa.me/55"
+            href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="hidden items-center gap-2 rounded-md bg-brand-yellow px-4 py-2 text-sm font-semibold text-brand-black transition-colors hover:bg-brand-yellow-dark sm:flex"

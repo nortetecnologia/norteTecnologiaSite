@@ -1,7 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
+import { getStoreSettings, buildWhatsAppUrl } from "@/lib/store-settings";
 
-export default function Footer() {
+export default async function Footer() {
+  const settings = await getStoreSettings();
+  const whatsappUrl = buildWhatsAppUrl(settings.whatsapp_number);
   const currentYear = new Date().getFullYear();
 
   return (
@@ -82,7 +85,7 @@ export default function Footer() {
             <ul className="space-y-3">
               <li>
                 <a
-                  href="https://wa.me/55"
+                  href={whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 text-sm text-gray-400 transition-colors hover:text-brand-yellow"

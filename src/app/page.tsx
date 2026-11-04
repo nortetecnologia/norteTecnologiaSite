@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import { getStoreSettings, buildWhatsAppUrl } from "@/lib/store-settings";
 
 const categories = [
   { name: "Computadores", icon: "🖥️", href: "/categoria/computadores" },
@@ -35,7 +36,10 @@ const services = [
   },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const settings = await getStoreSettings();
+  const whatsappUrl = buildWhatsAppUrl(settings.whatsapp_number);
+
   return (
     <>
       <Header />
@@ -85,7 +89,7 @@ export default function HomePage() {
                 Ver Produtos
               </Link>
               <a
-                href="https://wa.me/55"
+                href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 rounded-md border border-brand-gray-mid bg-brand-gray-dark px-6 py-3 text-base font-semibold text-white transition-colors hover:border-brand-yellow hover:text-brand-yellow"
@@ -228,7 +232,7 @@ export default function HomePage() {
 
             <div className="mt-8 text-center">
               <a
-                href="https://wa.me/55"
+                href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 rounded-md bg-brand-yellow px-6 py-3 text-base font-semibold text-brand-black transition-colors hover:bg-brand-yellow-dark"
@@ -250,7 +254,7 @@ export default function HomePage() {
               personalizado.
             </p>
             <a
-              href="https://wa.me/55"
+              href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-md bg-brand-yellow px-8 py-4 text-lg font-bold text-brand-black transition-colors hover:bg-brand-yellow-dark"
