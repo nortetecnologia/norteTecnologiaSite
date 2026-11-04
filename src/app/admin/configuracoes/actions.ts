@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 
 export type SettingsActionState = {
@@ -12,16 +13,18 @@ export async function saveStoreSettings(
   _prevState: SettingsActionState,
   formData: FormData
 ): Promise<SettingsActionState> {
-  const supabase = await createClient();
+  const anonClient = await createClient();
 
   const {
     data: { user },
     error: authError,
-  } = await supabase.auth.getUser();
+  } = await anonClient.auth.getUser();
 
   if (authError || !user) {
     return { error: "Não autorizado." };
   }
+
+  const supabase = createAdminClient();
 
   const whatsappRaw = (formData.get("whatsapp_number") as string) ?? "";
   const whatsappDigits = whatsappRaw.replace(/\D/g, "");
