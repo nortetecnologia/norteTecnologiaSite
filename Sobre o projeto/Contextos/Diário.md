@@ -8,19 +8,19 @@
 
 ## 1. Estado atual do projeto
 
-- **Estágio:** Admin totalmente funcional com autenticação real. Primeira funcionalidade admin real implementada: página de Configurações com CRUD de `store_settings`. WhatsApp carregado dinamicamente do banco em todo o site.
-- **Última atividade:** Implementação de `store_settings` (migration + Server Action + formulário admin + WhatsApp dinâmico no site público).
-- **Situação geral:** Deploy funcional na Vercel. Variáveis de ambiente configuradas. Admin acessível. **Pendente:** aplicar as migrations 001 e 002 no Supabase SQL Editor para ativar banco de dados. Após isso, configurar WhatsApp em `/admin/configuracoes` e os botões do site público atualizarão automaticamente.
-- **Próxima etapa:** Usuário aplica as migrations no Supabase SQL Editor → implementar admin de categorias → implementar admin de produtos.
+- **Estágio:** Admin funcional. CRUD de categorias/subcategorias implementado. Horário de funcionamento detalhado por dia da semana. Badge Aberto/Fechada no Header do site público.
+- **Última atividade:** 2026-11-04 — Admin de categorias + horário detalhado + indicador de status no site público.
+- **Situação geral:** Deploy funcional na Vercel. **Pendente:** aplicar todas as migrations (001–004) no Supabase SQL Editor. Após isso: configurar WhatsApp e horários em `/admin/configuracoes`, criar categorias em `/admin/categorias`.
+- **Próxima etapa:** Usuário aplica migrations 001–004 → configura WhatsApp e horários → implementar `/admin/produtos`.
 
 ---
 
 ## 2. Última atualização
 
 - **Data:** 2026-11-04
-- **Atividade:** Tabela `store_settings`, página `/admin/configuracoes` funcional, e WhatsApp dinâmico em todo o site.
-- **Resultado:** Migration `002_store_settings.sql` criada. `src/lib/store-settings.ts` com `getStoreSettings()` (React `cache()`) e `buildWhatsAppUrl()`. Formulário admin com `useActionState` e Server Action para salvar. Header, Footer e homepage.tsx carregam o WhatsApp do banco (fallback para `https://wa.me/`). Build passou (11 páginas, tsc OK, lint OK).
-- **Situação:** Código concluído. Aguarda aplicação da migration no Supabase SQL Editor (001 + 002).
+- **Atividade:** Admin de categorias + horário de funcionamento detalhado + badge Aberto/Fechada no Header.
+- **Resultado:** Migration 003 (categories/subcategories), migration 004 (business_hours_schedule JSONB), `src/lib/business-hours.ts` com tipos e `isStoreOpen()`, `BusinessHoursEditor.tsx` com editor por dia da semana + intervalo de almoço, `CategoriasClient.tsx` com CRUD completo via modais, badge de status no Header. Build passou (11 páginas, tsc OK, lint OK).
+- **Situação:** Código concluído. Aguarda aplicação de todas as migrations no Supabase.
 
 ---
 

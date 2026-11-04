@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
+import type { WeekSchedule } from "@/lib/business-hours";
 
 export interface StoreSettingsData {
   store_name: string;
@@ -8,7 +9,7 @@ export interface StoreSettingsData {
   address: string | null;
   city: string | null;
   state_abbr: string | null;
-  business_hours: string | null;
+  business_hours_schedule: WeekSchedule | null;
 }
 
 const DEFAULT: StoreSettingsData = {
@@ -18,7 +19,7 @@ const DEFAULT: StoreSettingsData = {
   address: null,
   city: null,
   state_abbr: "PA",
-  business_hours: null,
+  business_hours_schedule: null,
 };
 
 // cache() deduplicates calls within a single render pass (request-level)
@@ -28,7 +29,7 @@ export const getStoreSettings = cache(async (): Promise<StoreSettingsData> => {
     const { data, error } = await supabase
       .from("store_settings")
       .select(
-        "store_name, whatsapp_number, email, address, city, state_abbr, business_hours"
+        "store_name, whatsapp_number, email, address, city, state_abbr, business_hours_schedule"
       )
       .single();
 

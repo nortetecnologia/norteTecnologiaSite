@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { saveStoreSettings, type SettingsActionState } from "./actions";
 import type { StoreSettingsData } from "@/lib/store-settings";
+import { BusinessHoursEditor } from "./BusinessHoursEditor";
 
 interface Props {
   initialData: StoreSettingsData;
@@ -154,19 +155,7 @@ export function ConfiguracoesForm({ initialData }: Props) {
           </svg>
           Horário de Funcionamento
         </h2>
-        <div>
-          <label htmlFor="business_hours" className="block text-sm font-medium text-[#d1d5db] mb-1.5">
-            Horário
-          </label>
-          <input
-            id="business_hours"
-            name="business_hours"
-            type="text"
-            defaultValue={initialData.business_hours ?? ""}
-            placeholder="Seg–Sex: 8h–18h | Sáb: 8h–13h"
-            className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg px-4 py-2.5 text-white text-sm placeholder-[#4b5563] focus:outline-none focus:border-[#ffd600] focus:ring-1 focus:ring-[#ffd600] transition-colors"
-          />
-        </div>
+        <BusinessHoursEditor initialSchedule={initialData.business_hours_schedule} />
       </section>
 
       {/* Salvar */}
