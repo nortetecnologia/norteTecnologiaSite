@@ -13,10 +13,15 @@ async function getCategories() {
     const supabase = await createClient();
     const { data } = await supabase
       .from("categories")
-      .select("id, name, slug")
+      .select("id, name, slug, subcategories(id, name, slug)")
       .eq("is_active", true)
       .order("position", { ascending: true });
-    return data ?? [];
+    return (data ?? []) as Array<{
+      id: string;
+      name: string;
+      slug: string;
+      subcategories: Array<{ id: string; name: string; slug: string }>;
+    }>;
   } catch {
     return [];
   }
