@@ -30,7 +30,7 @@ export default async function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-brand-gray-mid bg-brand-black/95 backdrop-blur-sm">
       {/* Row 1: Logo + SearchBar + WhatsApp + Cart */}
-      <div className="mx-auto flex h-[60px] max-w-content items-center gap-3 px-4 lg:px-8">
+      <div className="flex h-[76px] w-full items-center gap-4 px-4 md:px-6 lg:px-10">
         <Link href="/" className="flex flex-shrink-0 items-center gap-2" aria-label="Ir para a página inicial">
           <Image
             src="/logo.png"
@@ -40,7 +40,7 @@ export default async function Header() {
             className="h-9 w-9 object-contain"
             priority
           />
-          <span className="hidden text-base font-bold text-white sm:block">
+          <span className="text-base font-bold text-white">
             Norte <span className="text-brand-yellow">Tecnologia</span>
           </span>
         </Link>
@@ -73,8 +73,8 @@ export default async function Header() {
 
       {/* Row 2: Hamburger + HeaderItemsBar */}
       <div className="border-t border-brand-gray-mid/50">
-        <div className="mx-auto flex h-10 max-w-content items-center gap-3 px-4 lg:px-8">
-          <HamburgerMenu whatsappUrl={whatsappUrl} categories={categories} />
+        <div className="flex h-10 w-full items-center gap-3 px-4 md:px-6 lg:px-10">
+          <HamburgerMenu categories={categories} />
           <div className="h-5 w-px bg-brand-gray-mid flex-shrink-0" aria-hidden="true" />
           <Suspense fallback={null}>
             <HeaderItemsBar />

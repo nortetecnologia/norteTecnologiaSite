@@ -35,7 +35,8 @@ function revalidate() {
 // ── Categorias ────────────────────────────────────────────────────────────────
 
 export async function createCategory(
-  name: string
+  name: string,
+  imageUrl?: string
 ): Promise<CategoryActionResult> {
   const trimmed = name.trim();
   if (!trimmed) return { error: "O nome da categoria é obrigatório." };
@@ -46,7 +47,7 @@ export async function createCategory(
 
     const { error } = await supabase
       .from("categories")
-      .insert({ name: trimmed, slug });
+      .insert({ name: trimmed, slug, ...(imageUrl ? { image_url: imageUrl } : {}) });
 
     if (error) {
       if (error.code === "23505")
@@ -64,7 +65,8 @@ export async function createCategory(
 
 export async function updateCategory(
   id: string,
-  name: string
+  name: string,
+  imageUrl?: string
 ): Promise<CategoryActionResult> {
   const trimmed = name.trim();
   if (!trimmed) return { error: "O nome da categoria é obrigatório." };
@@ -75,7 +77,7 @@ export async function updateCategory(
 
     const { error } = await supabase
       .from("categories")
-      .update({ name: trimmed, slug, updated_at: new Date().toISOString() })
+      .update({ name: trimmed, slug, updated_at: new Date().toISOString(), image_url: imageUrl ?? null })
       .eq("id", id);
 
     if (error) {
