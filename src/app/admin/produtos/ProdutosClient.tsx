@@ -519,23 +519,45 @@ export function ProdutosClient({ products, categories }: Props) {
                 <span className={labelCls}>Imagem Principal</span>
                 <input type="hidden" name="image_url" value={imageUrl} />
 
-                {/* Preview */}
-                {imageUrl && (
-                  <div className="mb-2 flex items-center gap-3">
-                    <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-[#2a2a2a] flex-shrink-0 border border-[#3a3a3a]">
-                      <Image src={imageUrl} alt="Preview" fill className="object-cover" unoptimized />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => { setImageUrl(""); setUploadError(null); }}
-                      className="text-xs text-red-400 hover:text-red-300 transition-colors"
-                    >
-                      Remover imagem
-                    </button>
+                {/* Preview fiel à página do produto (aspect-square, object-contain, fundo preto) */}
+                <div className="mb-3">
+                  <p className="mb-1.5 text-[11px] text-[#4b5563]">
+                    Prévia — como exibido na página do produto
+                  </p>
+                  <div className="relative aspect-square w-full max-w-[260px] overflow-hidden rounded-lg bg-[#0a0a0a] border border-[#2a2a2a]">
+                    {imageUrl ? (
+                      <>
+                        <Image src={imageUrl} alt="Preview" fill className="object-contain" unoptimized />
+                        <button
+                          type="button"
+                          onClick={() => { setImageUrl(""); setUploadError(null); }}
+                          className="absolute right-2 top-2 rounded-md border border-[#3a3a3a] bg-[#1a1a1a]/90 px-2 py-1 text-[11px] text-[#9ca3af] backdrop-blur-sm transition-colors hover:border-red-800/40 hover:text-red-400"
+                        >
+                          Remover
+                        </button>
+                      </>
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center">
+                        <svg
+                          className="h-16 w-16 text-[#2a2a2a]"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1}
+                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
 
-                {/* Upload de arquivo */}
+                {/* Upload de arquivo do PC */}
                 <label
                   className={`flex items-center gap-2 cursor-pointer w-full bg-[#0a0a0a] border border-dashed border-[#3a3a3a] rounded-lg px-3 py-2.5 text-sm transition-colors hover:border-[#ffd600]/50 ${uploadState === "uploading" ? "opacity-60 pointer-events-none" : ""}`}
                 >
@@ -548,21 +570,21 @@ export function ProdutosClient({ products, categories }: Props) {
                   />
                   {uploadState === "uploading" ? (
                     <>
-                      <svg className="animate-spin text-[#ffd600] flex-shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                      <svg className="animate-spin flex-shrink-0 text-[#ffd600]" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
                         <circle cx="12" cy="12" r="9" strokeOpacity="0.25" />
                         <path d="M12 3a9 9 0 019 9" />
                       </svg>
-                      <span className="text-[#9ca3af]">Enviando…</span>
+                      <span className="text-[#9ca3af]">Enviando para o Cloudinary…</span>
                     </>
                   ) : (
                     <>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#9ca3af] flex-shrink-0" aria-hidden="true">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 text-[#9ca3af]" aria-hidden="true">
                         <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
                         <polyline points="17 8 12 3 7 8" />
                         <line x1="12" y1="3" x2="12" y2="15" />
                       </svg>
-                      <span className="text-[#9ca3af]">{imageUrl ? "Substituir arquivo" : "Escolher arquivo"}</span>
-                      <span className="text-[#4b5563] text-xs ml-auto">JPEG · PNG · WebP · máx. 10 MB</span>
+                      <span className="text-[#9ca3af]">{imageUrl ? "Substituir arquivo" : "Enviar imagem do PC"}</span>
+                      <span className="ml-auto text-[11px] text-[#4b5563]">JPEG · PNG · WebP · máx. 10 MB</span>
                     </>
                   )}
                 </label>
@@ -571,10 +593,10 @@ export function ProdutosClient({ products, categories }: Props) {
                   <p className="mt-1 text-xs text-red-400">{uploadError}</p>
                 )}
 
-                {/* URL manual como alternativa */}
+                {/* URL manual — Cloudinary ou outra plataforma */}
                 <input
                   type="url"
-                  placeholder="Ou cole a URL da imagem..."
+                  placeholder="Ou cole a URL da imagem (Cloudinary, etc.)..."
                   value={imageUrl}
                   onChange={(e) => { setImageUrl(e.target.value); setUploadError(null); }}
                   className={`${inputCls} mt-2`}
