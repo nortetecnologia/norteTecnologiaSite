@@ -8,23 +8,37 @@
 
 ## 1. Estado atual do projeto
 
-- **Estágio:** Admin completo + Páginas públicas completas + Carrinho + Checkout + Formas de pagamento configuráveis + Menu mobile funcional + Header redesenhado (Pichau-style com busca, hambúrguer e vitrine_header) + Upload de imagens via Cloudinary funcionando.
-- **Última atividade:** 2026-11-05 — Upload de imagens via Cloudinary no admin de produtos.
-- **Situação geral:** Deploy funcional na Vercel. Variáveis do Cloudinary configuradas pelo usuário. **Pendente:** aplicar migrations (001–007) no Supabase SQL Editor em ordem. Migration 007 necessária para vitrine_header e conteúdo por categorias nas vitrines.
-- **Próxima etapa:** Aplicar migrations → configurar loja → cadastrar produtos com upload de imagens → montar vitrines.
+- **Estágio:** Admin completo + Páginas públicas completas + Carrinho + Checkout + Formas de pagamento configuráveis + Menu mobile funcional + Header redesenhado (full-width, h-76px) + Upload de imagens via Cloudinary funcionando (produtos e categorias).
+- **Última atividade:** 2026-11-05 — Header wider/taller, remoção do botão WhatsApp do drawer, upload de imagens em categorias admin.
+- **Situação geral:** Deploy funcional na Vercel. Variáveis do Cloudinary configuradas. **Pendente:** adicionar coluna `image_url text` na tabela `categories` no Supabase (para o upload de imagem de categorias funcionar). Aplicar migrations (001–007) em ordem no Supabase SQL Editor.
+- **Próxima etapa:** Adicionar coluna `image_url` na tabela `categories` → aplicar migrations → cadastrar produtos e categorias com imagens → montar vitrines.
 
 ---
 
 ## 2. Última atualização
 
 - **Data:** 2026-11-05
-- **Atividade:** Upload de imagens via Cloudinary no admin de produtos — Server Action segura + UI com preview.
-- **Resultado:** Todas as mensagens genéricas "Tente novamente." foram substituídas por erros descritivos do banco (código PostgreSQL, mensagem e dica). `logAdminError()` loga erros completos no servidor (visíveis em Vercel → Functions tab). Mapeamento especial para `42P01` (tabela não existe = migration não aplicada) e `42501` (sem permissão = service_role incorreta).
-- **Situação:** `SUPABASE_SECRET_KEY` configurada. Pendente: aplicar migrations 001–006 no Supabase SQL Editor.
+- **Atividade:** Header wider/taller + remoção botão WhatsApp drawer + image upload em categorias admin.
+- **Resultado:** 4 mudanças entregues em um commit. tsc limpo. Push para main/Vercel.
+- **Situação:** Deploy em andamento na Vercel. Requer adição de coluna `image_url text` na tabela `categories` para upload de imagem funcionar.
 
 ---
 
 ## 3. Implementações concluídas
+
+### 2026-11-05 — Header wider/taller, remoção WhatsApp drawer, image upload categorias (commit 993f226)
+
+- **Objetivo:** 4 melhorias solicitadas pelo usuário via screenshot.
+- **Implementação:**
+  - `Header.tsx` Row 1: `h-[60px]` → `h-[76px]`, `mx-auto max-w-content` → `w-full`, `px-4 lg:px-8` → `px-4 md:px-6 lg:px-10`. Row 2: mesmo ajuste. Logo nome sempre visível (removido `hidden sm:block`).
+  - `HamburgerMenu.tsx`: removida prop `whatsappUrl` e o bloco footer inteiro com o botão "Falar pelo WhatsApp". Estado vazio de categorias ganhou borda dashed para melhor aspecto visual.
+  - `src/app/admin/categorias/uploadAction.ts` criado — Server Action `uploadCategoryImage`, idêntica à de produtos mas pasta `norte-tecnologia/categorias/`.
+  - `actions.ts` (categorias): `createCategory(name, imageUrl?)` e `updateCategory(id, name, imageUrl?)` — passa `image_url` para Supabase quando fornecido.
+  - `CategoriasClient.tsx`: novo componente `CategoryForm` com nome + prévia fiel + upload de arquivo + URL como fallback. Modal cat_create/cat_edit usa `max-w-md` e `CategoryForm`. Subcategorias continuam com `NameForm`.
+  - `page.tsx` (categorias): seleciona `image_url` junto com as outras colunas.
+- **Dependência de banco:** A tabela `categories` precisa de uma coluna `image_url text` para o upload funcionar. Sem ela, `updateCategory` vai retornar erro do Supabase.
+- **Arquivos modificados:** `HamburgerMenu.tsx`, `Header.tsx`, `CategoriasClient.tsx`, `actions.ts`, `page.tsx` (categorias).
+- **Arquivos criados:** `src/app/admin/categorias/uploadAction.ts`.
 
 ### 2026-11-05 — Upload de imagens via Cloudinary no admin de produtos
 
