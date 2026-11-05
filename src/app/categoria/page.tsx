@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { createClient } from "@/lib/supabase/server";
@@ -9,7 +10,23 @@ export const metadata: Metadata = {
   description: "Explore todas as categorias de produtos da Norte Tecnologia.",
 };
 
-const STATIC_CATEGORIES = [
+interface CategoryRow {
+  id: string;
+  name: string;
+  slug: string;
+  image_url?: string;
+  subcategories: { id: string; name: string; slug: string }[];
+}
+
+interface DisplayCategory {
+  name: string;
+  slug: string;
+  icon: string;
+  imageUrl?: string;
+  description: string;
+}
+
+const STATIC_CATEGORIES: DisplayCategory[] = [
   { name: "Computadores", icon: "🖥️", slug: "computadores", description: "Desktops e all-in-ones" },
   { name: "Notebooks", icon: "💻", slug: "notebooks", description: "Portáteis para trabalho e estudo" },
   { name: "Periféricos", icon: "🖱️", slug: "perifericos", description: "Mouse, teclado, headset e mais" },
@@ -18,27 +35,21 @@ const STATIC_CATEGORIES = [
   { name: "Acessórios", icon: "🎧", slug: "acessorios", description: "Cabos, adaptadores e acessórios" },
 ];
 
-interface CategoryRow {
-  id: string;
-  name: string;
-  slug: string;
-  subcategories: { id: string; name: string; slug: string }[];
-}
-
 export default async function CategoriesPage() {
-  let categories: { name: string; slug: string; subcategoryCount: number }[] = [];
+  let categories: { name: string; slug: string; imageUrl?: string; subcategoryCount: number }[] = [];
 
   try {
     const supabase = await createClient();
     const { data } = await supabase
       .from("categories")
-      .select("id, name, slug, subcategories(id, name, slug)")
+      .select("id, name, slug, image_url, subcategories(id, name, slug)")
       .order("position", { ascending: true });
 
     if (data && data.length > 0) {
       categories = (data as CategoryRow[]).map((c) => ({
         name: c.name,
         slug: c.slug,
+        imageUrl: c.image_url ?? undefined,
         subcategoryCount: c.subcategories?.length ?? 0,
       }));
     }
@@ -46,12 +57,13 @@ export default async function CategoriesPage() {
     // DB não disponível
   }
 
-  const displayCategories =
+  const displayCategories: DisplayCategory[] =
     categories.length > 0
       ? categories.map((c) => ({
           name: c.name,
           slug: c.slug,
           icon: "📦",
+          imageUrl: c.imageUrl,
           description:
             c.subcategoryCount > 0
               ? `${c.subcategoryCount} subcategor${c.subcategoryCount === 1 ? "ia" : "ias"}`
@@ -93,11 +105,24 @@ export default async function CategoriesPage() {
                 <Link
                   key={cat.slug}
                   href={`/categoria/${cat.slug}`}
-                  className="group flex flex-col gap-3 rounded-lg border border-brand-gray-mid bg-brand-gray-dark p-6 transition-all hover:border-brand-yellow hover:bg-brand-gray-mid"
+                  className="group flex flex-col gap-3 rounded-lg border border-brand-gray-mid bg-brand-gray-dark p-4 transition-all hover:border-brand-yellow hover:bg-brand-gray-mid"
                 >
-                  <span className="text-4xl transition-transform group-hover:scale-110" aria-hidden="true">
-                    {cat.icon}
-                  </span>
+                  {"imageUrl" in cat && cat.imageUrl ? (
+                    <div className="relative aspect-square w-full overflow-hidden rounded-md bg-brand-black">
+                      <Image
+                        src={cat.imageUrl}
+                        alt={cat.name}
+                        fill
+                        className="object-contain transition-transform duration-300 group-hover:scale-105"
+                        unoptimized
+                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                      />
+                    </div>
+                  ) : (
+                    <span className="text-4xl transition-transform group-hover:scale-110" aria-hidden="true">
+                      {cat.icon}
+                    </span>
+                  )}
                   <div>
                     <h2 className="text-base font-semibold text-white group-hover:text-brand-yellow transition-colors">
                       {cat.name}
