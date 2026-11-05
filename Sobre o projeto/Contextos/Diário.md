@@ -8,23 +8,34 @@
 
 ## 1. Estado atual do projeto
 
-- **Estágio:** Admin completo + Páginas públicas completas + Carrinho + Checkout + Formas de pagamento configuráveis + Menu mobile funcional + Header redesenhado (full-width, h-76px) + Upload de imagens via Cloudinary funcionando (produtos e categorias).
-- **Última atividade:** 2026-11-05 — Header wider/taller, remoção do botão WhatsApp do drawer, upload de imagens em categorias admin.
-- **Situação geral:** Deploy funcional na Vercel. Variáveis do Cloudinary configuradas. **Pendente:** adicionar coluna `image_url text` na tabela `categories` no Supabase (para o upload de imagem de categorias funcionar). Aplicar migrations (001–007) em ordem no Supabase SQL Editor.
-- **Próxima etapa:** Adicionar coluna `image_url` na tabela `categories` → aplicar migrations → cadastrar produtos e categorias com imagens → montar vitrines.
+- **Estágio:** Admin completo + Páginas públicas completas + Carrinho + Checkout + Formas de pagamento configuráveis + Menu mobile funcional + Header redesenhado (full-width, h-88px, centralizado) + Upload de imagens via Cloudinary (produtos e categorias) + Drawer de categorias corrigido com expandir/recolher subcategorias.
+- **Última atividade:** 2026-11-05 — Drawer compactado (h-60px), categorias base + botão chevron para subcategorias, header centralizado e searchbar flex-1.
+- **Situação geral:** Deploy funcional na Vercel. **Pendente:** adicionar coluna `image_url text` na tabela `categories` no Supabase (para upload de imagem de categorias funcionar).
+- **Próxima etapa:** Adicionar coluna `image_url` na tabela `categories` via SQL (`ALTER TABLE categories ADD COLUMN IF NOT EXISTS image_url text;`) → cadastrar categorias com imagens → montar vitrines de produtos.
 
 ---
 
 ## 2. Última atualização
 
 - **Data:** 2026-11-05
-- **Atividade:** Header wider/taller + remoção botão WhatsApp drawer + image upload em categorias admin.
-- **Resultado:** 4 mudanças entregues em um commit. tsc limpo. Push para main/Vercel.
-- **Situação:** Deploy em andamento na Vercel. Requer adição de coluna `image_url text` na tabela `categories` para upload de imagem funcionar.
+- **Atividade:** Fix drawer HamburgerMenu (header compacto, categorias base + expandir subcategorias) + centralização header + fix SearchBar max-w.
+- **Resultado:** tsc limpo. Merge e push para main/Vercel.
+- **Situação:** Deploy em andamento na Vercel. Drawer exibe categorias base com chevron para expandir subcategorias. Header centralizado com SearchBar flex-1.
 
 ---
 
 ## 3. Implementações concluídas
+
+### 2026-11-05 — Drawer compacto + expandir subcategorias + header centralizado (commit 7b16b52)
+
+- **Objetivo:** Corrigir drawer "encolhido" (header muito alto consumia espaço da lista), exibir categorias base com botão "+" para expandir subcategorias se houver.
+- **Implementação:**
+  - `HamburgerMenu.tsx`: drawer header reduzido de `h-[88px]` para `h-[60px]`; `flex-shrink-0` garante que o header não encolhe; `nav` tem `min-h-0 flex-1 overflow-y-auto` para a lista ocupar o espaço restante. Interface `Category` agora inclui `subcategories: Subcategory[]`. Estado `expanded: Set<string>` controla quais categorias têm subcategorias visíveis. Cada categoria base mostra um botão chevron (apenas se tiver subcategorias); subcategorias aparecem indentadas com `border-l`. Rodapé com link "Ver todas as categorias".
+  - `Header.tsx`: `getCategories()` passa a selecionar `subcategories(id, name, slug)` via Supabase join e tipagem explícita.
+  - `SearchBar.tsx`: removido `max-w-xl` (era 576px) → `flex-1` só, resolvendo desalinhamento do header.
+  - `Header.tsx` Row 1: `h-[88px]`, `mx-auto max-w-[1600px]`, `px-6 lg:px-10`.
+- **Arquivos modificados:** `HamburgerMenu.tsx`, `Header.tsx`, `SearchBar.tsx`.
+- **Verificação:** `tsc --noEmit` sem erros.
 
 ### 2026-11-05 — Header wider/taller, remoção WhatsApp drawer, image upload categorias (commit 993f226)
 
