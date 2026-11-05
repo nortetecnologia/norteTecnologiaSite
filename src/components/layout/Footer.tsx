@@ -1,10 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getStoreSettings, buildWhatsAppUrl } from "@/lib/store-settings";
+import { isStoreOpen } from "@/lib/business-hours";
 
 export default async function Footer() {
   const settings = await getStoreSettings();
   const whatsappUrl = buildWhatsAppUrl(settings.whatsapp_number);
+  const storeOpen = isStoreOpen(settings.business_hours_schedule);
   const currentYear = new Date().getFullYear();
 
   return (
@@ -102,6 +104,23 @@ export default async function Footer() {
                   WhatsApp
                 </a>
               </li>
+              {settings.business_hours_schedule && (
+                <li>
+                  <span
+                    className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${
+                      storeOpen
+                        ? "bg-green-900/30 text-green-400 border border-green-800/40"
+                        : "bg-red-900/30 text-red-400 border border-red-800/40"
+                    }`}
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full ${storeOpen ? "bg-green-400" : "bg-red-400"}`}
+                      aria-hidden="true"
+                    />
+                    {storeOpen ? "Aberto agora" : "Fechada"}
+                  </span>
+                </li>
+              )}
             </ul>
           </div>
         </div>

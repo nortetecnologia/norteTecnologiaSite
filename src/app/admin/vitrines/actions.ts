@@ -129,6 +129,129 @@ export async function removeProductFromVitrine(
   }
 }
 
+export async function setVitrineContentType(
+  id: string,
+  contentType: "products" | "categories"
+): Promise<VitrineActionResult> {
+  try {
+    const supabase = await getAuthClient();
+
+    const { error } = await supabase
+      .from("vitrines")
+      .update({ content_type: contentType, updated_at: new Date().toISOString() })
+      .eq("id", id);
+
+    if (error) return { error: logAdminError("setVitrineContentType", error) };
+
+    revalidate();
+    return { success: true };
+  } catch (e) {
+    console.error("[admin/vitrines] setVitrineContentType exception:", e);
+    return { error: e instanceof Error ? e.message : "Erro inesperado." };
+  }
+}
+
+export async function addCategoryToVitrine(
+  vitrineId: string,
+  categoryId: string
+): Promise<VitrineActionResult> {
+  try {
+    const supabase = await getAuthClient();
+
+    const { data: existing } = await supabase
+      .from("vitrine_categories")
+      .select("position")
+      .eq("vitrine_id", vitrineId)
+      .order("position", { ascending: false })
+      .limit(1);
+
+    const nextPosition = existing && existing.length > 0 ? existing[0].position + 1 : 0;
+
+    const { error } = await supabase.from("vitrine_categories").insert({
+      vitrine_id: vitrineId,
+      category_id: categoryId,
+      position: nextPosition,
+    });
+
+    if (error) {
+      if (error.code === "23505") return { error: "Esta categoria já está nesta vitrine." };
+      return { error: logAdminError("addCategoryToVitrine", error) };
+    }
+
+    revalidate();
+    return { success: true };
+  } catch (e) {
+    console.error("[admin/vitrines] addCategoryToVitrine exception:", e);
+    return { error: e instanceof Error ? e.message : "Erro inesperado." };
+  }
+}
+
+export async function removeCategoryFromVitrine(
+  vitrineCategoryId: string
+): Promise<VitrineActionResult> {
+  try {
+    const supabase = await getAuthClient();
+
+    const { error } = await supabase
+      .from("vitrine_categories")
+      .delete()
+      .eq("id", vitrineCategoryId);
+
+    if (error) return { error: logAdminError("removeCategoryFromVitrine", error) };
+
+    revalidate();
+    return { success: true };
+  } catch (e) {
+    console.error("[admin/vitrines] removeCategoryFromVitrine exception:", e);
+    return { error: e instanceof Error ? e.message : "Erro inesperado." };
+  }
+}
+
+export async function moveCategoryInVitrine(
+  vitrineId: string,
+  vitrineCategoryId: string,
+  direction: "up" | "down"
+): Promise<VitrineActionResult> {
+  try {
+    const supabase = await getAuthClient();
+
+    const { data: items, error: fetchError } = await supabase
+      .from("vitrine_categories")
+      .select("id, position")
+      .eq("vitrine_id", vitrineId)
+      .order("position", { ascending: true });
+
+    if (fetchError || !items) return { error: fetchError ? logAdminError("moveCategoryInVitrine/fetch", fetchError) : "Nenhuma categoria encontrada." };
+
+    const index = items.findIndex((item) => item.id === vitrineCategoryId);
+    if (index === -1) return { error: "Categoria não encontrada na vitrine." };
+
+    const swapIndex = direction === "up" ? index - 1 : index + 1;
+    if (swapIndex < 0 || swapIndex >= items.length) return { success: true };
+
+    const current = items[index];
+    const neighbor = items[swapIndex];
+
+    const { error: e1 } = await supabase
+      .from("vitrine_categories")
+      .update({ position: neighbor.position })
+      .eq("id", current.id);
+
+    const { error: e2 } = await supabase
+      .from("vitrine_categories")
+      .update({ position: current.position })
+      .eq("id", neighbor.id);
+
+    if (e1 || e2) return { error: logAdminError("moveCategoryInVitrine/swap", e1 ?? e2!) };
+
+    revalidate();
+    return { success: true };
+  } catch (e) {
+    console.error("[admin/vitrines] moveCategoryInVitrine exception:", e);
+    return { error: e instanceof Error ? e.message : "Erro inesperado." };
+  }
+}
+
 export async function moveVitrineProduct(
   vitrineId: string,
   vitrineProductId: string,
