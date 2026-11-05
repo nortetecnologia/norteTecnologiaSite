@@ -9,7 +9,7 @@ export default async function AdminCategoriasPage() {
     const { data } = await supabase
       .from("categories")
       .select(
-        "id, name, slug, is_active, subcategories(id, name, slug, is_active)"
+        "id, name, slug, is_active, image_url, subcategories(id, name, slug, is_active)"
       )
       .order("name", { ascending: true });
 

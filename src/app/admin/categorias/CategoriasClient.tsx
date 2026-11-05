@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   createCategory,
   updateCategory,
@@ -10,6 +11,7 @@ import {
   updateSubcategory,
   deleteSubcategory,
 } from "./actions";
+import { uploadCategoryImage } from "./uploadAction";
 
 export interface SubcategoryData {
   id: string;
@@ -23,13 +25,14 @@ export interface CategoryData {
   name: string;
   slug: string;
   is_active: boolean;
+  image_url?: string;
   subcategories: SubcategoryData[];
 }
 
 type ModalState =
   | { kind: "none" }
   | { kind: "cat_create" }
-  | { kind: "cat_edit"; id: string; name: string }
+  | { kind: "cat_edit"; id: string; name: string; imageUrl: string }
   | { kind: "cat_delete"; id: string; name: string }
   | { kind: "sub_create"; catId: string; catName: string }
   | { kind: "sub_edit"; id: string; name: string; catId: string }
@@ -111,6 +114,166 @@ function NameForm({
   );
 }
 
+// ── CategoryForm (name + image upload) ───────────────────────────────────────
+
+interface CategoryFormProps {
+  initialName: string;
+  initialImageUrl: string;
+  error: string | null;
+  pending: boolean;
+  onCancel: () => void;
+  onSubmit: (name: string, imageUrl: string) => void;
+}
+
+function CategoryForm({
+  initialName,
+  initialImageUrl,
+  error,
+  pending,
+  onCancel,
+  onSubmit,
+}: CategoryFormProps) {
+  const [name, setName] = useState(initialName);
+  const [imageUrl, setImageUrl] = useState(initialImageUrl);
+  const [uploadState, setUploadState] = useState<"idle" | "uploading" | "error">("idle");
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const isEdit = initialName !== "";
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadState("uploading");
+    setUploadError(null);
+    const fd = new FormData();
+    fd.append("file", file);
+    const result = await uploadCategoryImage(fd);
+    if (result.error) {
+      setUploadState("error");
+      setUploadError(result.error);
+    } else if (result.url) {
+      setImageUrl(result.url);
+      setUploadState("idle");
+    }
+    e.target.value = "";
+  }
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-[#d1d5db] mb-1.5">
+          Nome da categoria
+        </label>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Ex: Computadores"
+          autoFocus
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && name.trim()) onSubmit(name.trim(), imageUrl);
+            if (e.key === "Escape") onCancel();
+          }}
+          className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg px-4 py-2.5 text-white text-sm placeholder-[#4b5563] focus:outline-none focus:border-[#ffd600] focus:ring-1 focus:ring-[#ffd600] transition-colors"
+        />
+      </div>
+
+      {/* Image section */}
+      <div>
+        <p className="mb-1.5 text-sm font-medium text-[#d1d5db]">Imagem</p>
+        <p className="mb-2 text-[11px] text-[#4b5563]">Prévia — como será exibida</p>
+        <div className="relative aspect-square w-full max-w-[220px] overflow-hidden rounded-lg bg-[#0a0a0a] border border-[#2a2a2a]">
+          {imageUrl ? (
+            <>
+              <Image src={imageUrl} alt="Preview" fill className="object-contain" unoptimized />
+              <button
+                type="button"
+                onClick={() => { setImageUrl(""); setUploadError(null); }}
+                className="absolute right-2 top-2 rounded-md border border-[#3a3a3a] bg-[#1a1a1a]/90 px-2 py-1 text-[11px] text-[#9ca3af] backdrop-blur-sm transition-colors hover:border-red-800/40 hover:text-red-400"
+              >
+                Remover
+              </button>
+            </>
+          ) : (
+            <div className="flex h-full w-full items-center justify-center">
+              <svg className="h-14 w-14 text-[#2a2a2a]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-2 space-y-2">
+          <label className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium transition-colors ${uploadState === "uploading" ? "border-[#2a2a2a] text-[#4b5563] cursor-not-allowed" : "border-[#2a2a2a] text-[#d1d5db] hover:border-[#ffd600] hover:text-[#ffd600]"}`}>
+            {uploadState === "uploading" ? (
+              <>
+                <svg className="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Enviando…
+              </>
+            ) : (
+              <>
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                {imageUrl ? "Trocar imagem" : "Enviar do computador"}
+              </>
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              disabled={uploadState === "uploading"}
+              onChange={handleFileChange}
+            />
+          </label>
+
+          <input
+            type="url"
+            value={imageUrl}
+            onChange={(e) => { setImageUrl(e.target.value); setUploadError(null); }}
+            placeholder="Ou cole uma URL de imagem"
+            className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg px-3 py-2 text-xs text-white placeholder-[#4b5563] focus:outline-none focus:border-[#ffd600] focus:ring-1 focus:ring-[#ffd600] transition-colors"
+          />
+
+          {uploadState === "error" && uploadError && (
+            <p className="text-xs text-red-400 bg-red-900/20 border border-red-800/40 rounded-lg px-3 py-2">
+              {uploadError}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {error && (
+        <p className="text-red-400 text-sm bg-red-900/20 border border-red-800/40 rounded-lg px-3 py-2">
+          {error}
+        </p>
+      )}
+      <div className="flex gap-3 justify-end">
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={pending}
+          className="px-4 py-2 text-sm text-[#d1d5db] hover:text-white transition-colors"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          onClick={() => name.trim() && onSubmit(name.trim(), imageUrl)}
+          disabled={pending || !name.trim() || uploadState === "uploading"}
+          className="px-5 py-2 text-sm font-semibold bg-[#ffd600] text-[#0a0a0a] rounded-lg hover:bg-[#e6c000] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          {pending
+            ? isEdit ? "Salvando…" : "Criando…"
+            : isEdit ? "Salvar" : "Criar"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function CategoriasClient({
@@ -175,7 +338,7 @@ export function CategoriasClient({
         aria-hidden="true"
       />
       <div
-        className="relative w-full max-w-sm bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-6 shadow-xl"
+        className={`relative w-full ${modal.kind === "cat_create" || modal.kind === "cat_edit" ? "max-w-md" : "max-w-sm"} bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-6 shadow-xl`}
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-white font-semibold text-lg mb-4">
@@ -228,35 +391,38 @@ export function CategoriasClient({
           </div>
         )}
 
-        {/* Create / Edit form */}
-        {modal.kind !== "cat_delete" && modal.kind !== "sub_delete" && (
+        {/* Category create / edit — with image upload */}
+        {(modal.kind === "cat_create" || modal.kind === "cat_edit") && (
+          <CategoryForm
+            key={JSON.stringify(modal)}
+            initialName={modal.kind === "cat_edit" ? modal.name : ""}
+            initialImageUrl={modal.kind === "cat_edit" ? modal.imageUrl : ""}
+            error={modalError}
+            pending={pending}
+            onCancel={closeModal}
+            onSubmit={(name, imageUrl) => {
+              const m = modal;
+              if (m.kind === "cat_create")
+                runAction(() => createCategory(name, imageUrl || undefined));
+              else if (m.kind === "cat_edit")
+                runAction(() => updateCategory(m.id, name, imageUrl || undefined));
+            }}
+          />
+        )}
+
+        {/* Subcategory create / edit — name only */}
+        {(modal.kind === "sub_create" || modal.kind === "sub_edit") && (
           <NameForm
             key={JSON.stringify(modal)}
-            initialValue={
-              modal.kind === "cat_edit" || modal.kind === "sub_edit"
-                ? modal.name
-                : ""
-            }
-            label={
-              modal.kind === "cat_create" || modal.kind === "cat_edit"
-                ? "Nome da categoria"
-                : "Nome da subcategoria"
-            }
-            placeholder={
-              modal.kind === "cat_create" || modal.kind === "cat_edit"
-                ? "Ex: Computadores"
-                : "Ex: Desktop"
-            }
+            initialValue={modal.kind === "sub_edit" ? modal.name : ""}
+            label="Nome da subcategoria"
+            placeholder="Ex: Desktop"
             error={modalError}
             pending={pending}
             onCancel={closeModal}
             onSubmit={(name) => {
               const m = modal;
-              if (m.kind === "cat_create")
-                runAction(() => createCategory(name));
-              else if (m.kind === "cat_edit")
-                runAction(() => updateCategory(m.id, name));
-              else if (m.kind === "sub_create")
+              if (m.kind === "sub_create")
                 runAction(() => createSubcategory(m.catId, name));
               else if (m.kind === "sub_edit")
                 runAction(() => updateSubcategory(m.id, name));
@@ -408,6 +574,7 @@ export function CategoriasClient({
                           kind: "cat_edit",
                           id: cat.id,
                           name: cat.name,
+                          imageUrl: cat.image_url ?? "",
                         })
                       }
                       className="p-1.5 text-[#6b7280] hover:text-[#ffd600] transition-colors rounded"
