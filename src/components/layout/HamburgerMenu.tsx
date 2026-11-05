@@ -80,7 +80,7 @@ export function HamburgerMenu({ categories }: HamburgerMenuProps) {
         }`}
       >
         {/* Drawer header */}
-        <div className="flex h-[72px] items-center justify-between border-b border-brand-gray-mid px-5">
+        <div className="flex h-[88px] items-center justify-between border-b border-brand-gray-mid px-5">
           <span className="text-base font-bold text-white">
             Norte <span className="text-brand-yellow">Tecnologia</span>
           </span>
