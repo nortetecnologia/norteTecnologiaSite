@@ -11,6 +11,7 @@ import {
   toggleProductActive,
   type ProductActionResult,
 } from "./actions";
+import { uploadToCloudinary } from "./uploadAction";
 
 export interface ProductData {
   id: string;
@@ -81,6 +82,9 @@ export function ProdutosClient({ products, categories }: Props) {
   const [formCategoryId, setFormCategoryId] = useState("");
   const [formSubcategoryId, setFormSubcategoryId] = useState("");
   const [isActive, setIsActive] = useState(true);
+  const [imageUrl, setImageUrl] = useState("");
+  const [uploadState, setUploadState] = useState<"idle" | "uploading" | "error">("idle");
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const subcategoryOptions =
     categories.find((c) => c.id === formCategoryId)?.subcategories ?? [];
@@ -90,6 +94,9 @@ export function ProdutosClient({ products, categories }: Props) {
     setFormSubcategoryId("");
     setIsActive(true);
     setFormError(null);
+    setImageUrl("");
+    setUploadState("idle");
+    setUploadError(null);
     setModal({ kind: "create" });
   }
 
@@ -98,6 +105,9 @@ export function ProdutosClient({ products, categories }: Props) {
     setFormSubcategoryId(product.subcategory_id ?? "");
     setIsActive(product.is_active);
     setFormError(null);
+    setImageUrl(product.primary_image_url ?? "");
+    setUploadState("idle");
+    setUploadError(null);
     setModal({ kind: "edit", product });
   }
 
@@ -135,6 +145,24 @@ export function ProdutosClient({ products, categories }: Props) {
     } else if (modal.kind === "edit") {
       runFormAction(() => updateProduct(modal.product.id, formData));
     }
+  }
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadState("uploading");
+    setUploadError(null);
+    const fd = new FormData();
+    fd.append("file", file);
+    const result = await uploadToCloudinary(fd);
+    if (result.error) {
+      setUploadState("error");
+      setUploadError(result.error);
+    } else {
+      setUploadState("idle");
+      setImageUrl(result.url!);
+    }
+    e.target.value = "";
   }
 
   function handleToggleActive(product: ProductData) {
@@ -488,18 +516,69 @@ export function ProdutosClient({ products, categories }: Props) {
 
               {/* Imagem */}
               <div>
-                <label htmlFor="prod-image" className={labelCls}>URL da Imagem Principal</label>
+                <span className={labelCls}>Imagem Principal</span>
+                <input type="hidden" name="image_url" value={imageUrl} />
+
+                {/* Preview */}
+                {imageUrl && (
+                  <div className="mb-2 flex items-center gap-3">
+                    <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-[#2a2a2a] flex-shrink-0 border border-[#3a3a3a]">
+                      <Image src={imageUrl} alt="Preview" fill className="object-cover" unoptimized />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { setImageUrl(""); setUploadError(null); }}
+                      className="text-xs text-red-400 hover:text-red-300 transition-colors"
+                    >
+                      Remover imagem
+                    </button>
+                  </div>
+                )}
+
+                {/* Upload de arquivo */}
+                <label
+                  className={`flex items-center gap-2 cursor-pointer w-full bg-[#0a0a0a] border border-dashed border-[#3a3a3a] rounded-lg px-3 py-2.5 text-sm transition-colors hover:border-[#ffd600]/50 ${uploadState === "uploading" ? "opacity-60 pointer-events-none" : ""}`}
+                >
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="sr-only"
+                    disabled={uploadState === "uploading"}
+                  />
+                  {uploadState === "uploading" ? (
+                    <>
+                      <svg className="animate-spin text-[#ffd600] flex-shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+                        <circle cx="12" cy="12" r="9" strokeOpacity="0.25" />
+                        <path d="M12 3a9 9 0 019 9" />
+                      </svg>
+                      <span className="text-[#9ca3af]">Enviando…</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#9ca3af] flex-shrink-0" aria-hidden="true">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                      </svg>
+                      <span className="text-[#9ca3af]">{imageUrl ? "Substituir arquivo" : "Escolher arquivo"}</span>
+                      <span className="text-[#4b5563] text-xs ml-auto">JPEG · PNG · WebP · máx. 10 MB</span>
+                    </>
+                  )}
+                </label>
+
+                {uploadError && (
+                  <p className="mt-1 text-xs text-red-400">{uploadError}</p>
+                )}
+
+                {/* URL manual como alternativa */}
                 <input
-                  id="prod-image"
-                  name="image_url"
                   type="url"
-                  defaultValue={modal.kind === "edit" ? (modal.product.primary_image_url ?? "") : ""}
-                  placeholder="https://..."
-                  className={inputCls}
+                  placeholder="Ou cole a URL da imagem..."
+                  value={imageUrl}
+                  onChange={(e) => { setImageUrl(e.target.value); setUploadError(null); }}
+                  className={`${inputCls} mt-2`}
                 />
-                <p className="mt-1 text-xs text-[#6b7280]">
-                  Upload via Cloudinary disponível em breve. Por enquanto, informe a URL da imagem.
-                </p>
               </div>
 
               {/* Status (apenas edição) */}
@@ -535,11 +614,13 @@ export function ProdutosClient({ products, categories }: Props) {
                 </button>
                 <button
                   type="submit"
-                  disabled={isPending}
+                  disabled={isPending || uploadState === "uploading"}
                   className="bg-[#ffd600] text-[#0a0a0a] text-sm font-semibold px-5 py-2 rounded-lg hover:bg-[#e6c000] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {isPending
                     ? "Salvando…"
+                    : uploadState === "uploading"
+                    ? "Aguarde o upload…"
                     : modal.kind === "create"
                     ? "Criar Produto"
                     : "Salvar Alterações"}
