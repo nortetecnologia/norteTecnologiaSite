@@ -8,23 +8,96 @@
 
 ## 1. Estado atual do projeto
 
-- **Estágio:** Admin completo + Páginas públicas completas + Carrinho + Checkout + Formas de pagamento configuráveis + Menu mobile funcional. Todas as rotas documentadas em `Rotas.md` implementadas. Operações admin de escrita corrigidas (service_role).
-- **Última atividade:** 2026-11-04 — Correção de bug: operações admin de escrita falhavam silenciosamente.
-- **Situação geral:** Deploy funcional na Vercel. **Pendente:** aplicar migrations (001–006) no Supabase SQL Editor em ordem. Após isso: configurar loja, criar categorias, cadastrar produtos, montar vitrines.
-- **Próxima etapa:** Usuário aplica migrations → configura loja → testa fluxo completo. Depois: Cloudinary upload para imagens, importação XML do CRM (aguarda arquivo de exemplo).
+- **Estágio:** Admin completo + Páginas públicas completas + Carrinho + Checkout + Formas de pagamento configuráveis + Menu mobile funcional + Header redesenhado (Pichau-style com busca, hambúrguer e vitrine_header) + Upload de imagens via Cloudinary funcionando.
+- **Última atividade:** 2026-11-05 — Upload de imagens via Cloudinary no admin de produtos.
+- **Situação geral:** Deploy funcional na Vercel. Variáveis do Cloudinary configuradas pelo usuário. **Pendente:** aplicar migrations (001–007) no Supabase SQL Editor em ordem. Migration 007 necessária para vitrine_header e conteúdo por categorias nas vitrines.
+- **Próxima etapa:** Aplicar migrations → configurar loja → cadastrar produtos com upload de imagens → montar vitrines.
 
 ---
 
 ## 2. Última atualização
 
-- **Data:** 2026-11-04
-- **Atividade:** Correção de operações admin de escrita (criar/editar/excluir categorias, produtos, vitrines, configurações).
-- **Resultado:** Duas causas corrigidas: (1) `@supabase/ssr` e `@supabase/supabase-js` ausentes do `package.json` — Vercel não os instalava; (2) writes admin usavam cliente anon + JWT, que pode falhar com RLS `auth.role()` — trocado por cliente service_role (bypassa RLS após verificação de auth). Build passou (15 páginas, tsc OK, lint OK).
-- **Situação:** Todas as operações CRUD do admin devem funcionar após `SUPABASE_SECRET_KEY` estar configurada nas env vars do projeto.
+- **Data:** 2026-11-05
+- **Atividade:** Upload de imagens via Cloudinary no admin de produtos — Server Action segura + UI com preview.
+- **Resultado:** Todas as mensagens genéricas "Tente novamente." foram substituídas por erros descritivos do banco (código PostgreSQL, mensagem e dica). `logAdminError()` loga erros completos no servidor (visíveis em Vercel → Functions tab). Mapeamento especial para `42P01` (tabela não existe = migration não aplicada) e `42501` (sem permissão = service_role incorreta).
+- **Situação:** `SUPABASE_SECRET_KEY` configurada. Pendente: aplicar migrations 001–006 no Supabase SQL Editor.
 
 ---
 
 ## 3. Implementações concluídas
+
+### 2026-11-05 — Upload de imagens via Cloudinary no admin de produtos
+
+- **Objetivo:** Substituir o campo "URL da imagem" por upload real de arquivo com preview, mantendo URL manual como alternativa.
+- **Implementação:**
+  - Criado `src/app/admin/produtos/uploadAction.ts` — Server Action `uploadToCloudinary(formData)`:
+    - Recebe `File` do cliente via FormData.
+    - Valida: tipo `image/*`, tamanho ≤ 10 MB, credenciais presentes.
+    - Gera assinatura SHA-256 com `timestamp + folder + signature_algorithm + CLOUDINARY_API_SECRET` (Node.js `crypto`, sem SDK externo).
+    - POST autenticado para `https://api.cloudinary.com/v1_1/{cloudName}/image/upload`; uploads salvos em `norte-tecnologia/produtos/`.
+    - Retorna `{ url }` (URL `secure_url` do Cloudinary) ou `{ error }` descritivo.
+    - `CLOUDINARY_API_SECRET` NUNCA sai do servidor.
+  - Atualizado `src/app/admin/produtos/ProdutosClient.tsx`:
+    - Adicionados estados: `imageUrl`, `uploadState: "idle" | "uploading" | "error"`, `uploadError`.
+    - `openCreate` e `openEdit` resetam/inicializam o estado de imagem corretamente.
+    - Função `handleFileChange` — chama `uploadToCloudinary`, atualiza preview ao concluir.
+    - UI de imagem:
+      - Preview thumbnail 64×64 com botão "Remover imagem".
+      - Área de upload dashed com ícone, estado "Enviando…" com spinner (upload em andamento).
+      - Input URL como alternativa ("Ou cole a URL da imagem…").
+      - Mensagem de erro inline em vermelho.
+    - Hidden input `name="image_url"` controlado por estado — `createProduct`/`updateProduct` leem normalmente.
+    - Botão submit desabilitado durante upload ("Aguarde o upload…").
+- **Decisões técnicas:**
+  - Sem dependência do SDK `cloudinary` — usa `crypto` nativo (Node.js) e `fetch`. Reduz bundle de dependências.
+  - Upload acontece antes do submit do formulário (preview imediato). URL fica pronta no estado; submit do produto usa a URL já resolvida.
+  - URL manual (`input type="url"`) permanece como fallback para imagens externas ou migração de dados.
+  - Pasta Cloudinary: `norte-tecnologia/produtos/` — organização por projeto no Cloudinary.
+- **Verificações executadas:** tsc + lint + build (pendente — a executar antes do deploy).
+- **Arquivos criados:** `src/app/admin/produtos/uploadAction.ts`
+- **Arquivos modificados:** `src/app/admin/produtos/ProdutosClient.tsx`, `Sobre o projeto/Contextos/Diário.md`
+
+### 2026-11-05 — Header redesenhado (Pichau-style) + SearchBar + HamburgerMenu + vitrine_header (commit 7a5c5de)
+
+- **Objetivo:** Redesenhar o header com busca proeminente, hambúrguer em todos os breakpoints, vitrine do header configurável pelo admin, badge Aberto/Fechado movido para o footer.
+- **Implementação:**
+  - `src/components/layout/Header.tsx` — reescrito para 2 linhas:
+    - Row 1 (60px): Logo + SearchBar + WhatsApp (oculto mobile) + CartIcon.
+    - Row 2 (40px): HamburgerMenu + separador + HeaderItemsBar (vitrine_header, máx. 10 itens).
+  - `src/components/ui/SearchBar.tsx` — Client Component com debounce 350ms, `router.push("/busca?q=")`, mín. 2 chars.
+  - `src/app/busca/page.tsx` — Server Component; busca ILIKE nos produtos; grid ProductCard.
+  - `src/components/layout/HamburgerMenu.tsx` — drawer esquerdo, visível em todos os breakpoints; recebe categorias + whatsappUrl como props; sem badge (badge somente no footer).
+  - `src/components/layout/HeaderItemsBar.tsx` — Server Component; lê `vitrine_header` do banco; renderiza até 10 itens (produtos ou categorias).
+  - `src/components/layout/Footer.tsx` — adicionado badge Aberto/Fechado na coluna Contato.
+  - `src/app/admin/vitrines/actions.ts` — 4 novas actions: `setVitrineContentType`, `addCategoryToVitrine`, `removeCategoryFromVitrine`, `moveCategoryInVitrine`.
+  - `src/app/admin/vitrines/VitrinasClient.tsx` — reescrito com suporte a `content_type` (Produtos/Categorias), modal de categorias, label ⭐ para vitrine_header.
+  - `src/app/admin/vitrines/page.tsx` — busca `vitrine_categories` aninhadas.
+  - `supabase/migrations/007_header_vitrine.sql` — `content_type` na tabela `vitrines`, nova tabela `vitrine_categories`, inserção da `vitrine_header`.
+- **Decisão técnica:** Badge apenas no footer (instrução explícita do usuário). Hambúrguer visível em todos os breakpoints.
+- **Pré-requisito:** Migration 007 deve ser aplicada pelo usuário no Supabase SQL Editor para a vitrine_header e vitrine_categories funcionarem.
+- **Arquivos criados:** `src/components/ui/SearchBar.tsx`, `src/app/busca/page.tsx`, `src/components/layout/HamburgerMenu.tsx`, `src/components/layout/HeaderItemsBar.tsx`, `supabase/migrations/007_header_vitrine.sql`
+- **Arquivos modificados:** `src/components/layout/Header.tsx`, `src/components/layout/Footer.tsx`, `src/app/admin/vitrines/actions.ts`, `src/app/admin/vitrines/VitrinasClient.tsx`, `src/app/admin/vitrines/page.tsx`
+
+### 2026-11-04 — Erros específicos e observabilidade nas actions admin (commit d22fabb)
+
+- **Problema:** Todas as falhas admin retornavam "Erro ao criar X. Tente novamente." sem revelar a causa real.
+- **Solução:**
+  - Adicionado `logAdminError(context, error)` em `src/lib/supabase/admin.ts`: faz `console.error` completo no servidor (aparece em Vercel → Deployment → Functions tab) e retorna string descritiva para a UI com código, mensagem e dica do banco.
+  - Mapeamento de códigos PostgreSQL/PostgREST: `42P01` = "Tabela não encontrada — migrations não aplicadas"; `42501` = "Sem permissão — verifique SUPABASE_SECRET_KEY"; `23503` = FK violation; `PGRST301` = JWT inválido.
+  - Substituídas todas as mensagens genéricas nos 4 arquivos de actions do admin.
+  - Adicionado `console.error` em todos os catch blocks.
+  - Logging no `createAdminClient()` quando env vars ausentes.
+- **Decisão técnica:** Erros técnicos completos exibidos apenas no admin (rotas protegidas por auth) — adequado para usuário admin diagnosticar problemas. Nunca expostos ao público.
+- **Verificações executadas:** tsc OK, lint OK, build OK (15 páginas).
+- **Arquivos modificados:** `src/lib/supabase/admin.ts`, `src/app/admin/categorias/actions.ts`, `src/app/admin/produtos/actions.ts`, `src/app/admin/vitrines/actions.ts`, `src/app/admin/configuracoes/actions.ts`
+
+### 2026-11-04 — Correção crítica: BOM no package.json (commit 3ccebe0)
+
+- **Problema:** Build Vercel falhava com `Unexpected token '﻿', "﻿{ "name"... is not valid JSON.`
+- **Causa:** PowerShell `Set-Content -Encoding utf8` (PS 5.1 / .NET Framework) adiciona BOM (EF BB BF) no início do arquivo. JSON não suporta BOM.
+- **Correção:** Reescrito com `New-Object System.Text.UTF8Encoding($false)` + `[System.IO.File]::WriteAllText()` — garante UTF-8 sem BOM.
+- **Lição aprendida:** Em PowerShell 5.1, usar sempre `New-Object System.Text.UTF8Encoding($false)` para escrever JSON. `Set-Content -Encoding utf8` e `Set-Content -Encoding utf8NoBOM` são inseguros ou indisponíveis no .NET Framework.
+- **Arquivos modificados:** `package.json` (main)
 
 ### 2026-11-04 — Correção: Operações Admin de Escrita
 
@@ -391,22 +464,16 @@ _(nenhuma tarefa em andamento no momento)_
 
 ## 5. Pendências e problemas conhecidos
 
-- **Migrations não aplicadas:** `supabase/migrations/001_vitrines.sql` e `002_store_settings.sql` criadas mas NÃO aplicadas ao projeto Supabase. Aplicar no Supabase SQL Editor (001 primeiro, depois 002).
+- **Migrations não aplicadas:** Migrations `001` a `007` criadas mas NÃO aplicadas ao projeto Supabase. Aplicar no Supabase SQL Editor em ordem (001 → 007). Migration 007 necessária para `vitrine_header` e `content_type` nas vitrines.
 - **WhatsApp não configurado:** Após aplicar as migrations, acessar `/admin/configuracoes` e preencher o número do WhatsApp (formato: 5591999999999).
-- **Cloudinary não configurado:** Variáveis `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` ainda pendentes para upload de imagens.
-- **Sub-rotas admin ainda são stubs:** `/admin/produtos`, `/admin/categorias`, `/admin/vitrines`, `/admin/relatorios` — aguardam banco de dados configurado e implementação.
-- **Links de loja 404:** `/categoria`, `/produto/[slug]`, `/carrinho`, `/checkout` não implementados ainda.
 
 ---
 
 ## 6. Próximas etapas
 
-1. **Aplicar migrations no Supabase SQL Editor:** 001 → 002 → 003 → 004 → 005 (em ordem).
-2. **Configurar loja:** `/admin/configuracoes` — WhatsApp, horários. `/admin/categorias` — criar categorias/subcategorias. `/admin/produtos` — cadastrar produtos. `/admin/vitrines` — montar vitrines.
-3. **Implementar páginas públicas:** `/categoria/[slug]` — listagem de produtos por categoria. `/produto/[slug]` — detalhe do produto.
-4. **Implementar carrinho:** Persistência via localStorage ou contexto React.
-5. **Implementar checkout:** Fluxo de finalização com mensagem automática para WhatsApp (número das configurações).
-6. **Integrar Cloudinary:** Upload de imagens de produtos no painel admin (atualmente aceita apenas URL).
+1. **Aplicar migrations no Supabase SQL Editor:** 001 → 002 → 003 → 004 → 005 → 006 → 007 (em ordem).
+2. **Configurar loja:** `/admin/configuracoes` — WhatsApp, horários. `/admin/categorias` — criar categorias/subcategorias. `/admin/produtos` — cadastrar produtos com upload de imagens via Cloudinary. `/admin/vitrines` — montar vitrines incluindo vitrine_header.
+3. **Testar upload de imagens:** Cadastrar produto no admin com upload de arquivo para verificar integração Cloudinary end-to-end.
 
 ---
 
