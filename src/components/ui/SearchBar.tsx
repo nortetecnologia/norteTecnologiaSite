@@ -35,7 +35,7 @@ export function SearchBar() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex-1 max-w-xl" role="search">
+    <form onSubmit={handleSubmit} className="flex-1" role="search">
       <div className="relative">
         <input
           type="search"
@@ -43,12 +43,12 @@ export function SearchBar() {
           onChange={handleChange}
           placeholder="Buscar produtos..."
           aria-label="Buscar produtos"
-          className="w-full rounded-md border border-brand-gray-mid bg-brand-gray-dark py-2 pl-10 pr-4 text-sm text-white placeholder-gray-500 outline-none transition-colors focus:border-brand-yellow focus:ring-1 focus:ring-brand-yellow"
+          className="w-full rounded-lg border border-brand-gray-mid bg-brand-gray-dark py-2.5 pl-11 pr-4 text-sm text-white placeholder-gray-500 outline-none transition-colors focus:border-brand-yellow focus:ring-1 focus:ring-brand-yellow"
         />
         <button
           type="submit"
           aria-label="Pesquisar"
-          className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 hover:text-brand-yellow transition-colors"
+          className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400 hover:text-brand-yellow transition-colors"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
