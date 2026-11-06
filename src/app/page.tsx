@@ -39,6 +39,15 @@ const services = [
   },
 ];
 
+interface PromoRow {
+  id: string;
+  title: string;
+  slug: string;
+  subtitle: string | null;
+  discount_percent: number | null;
+  cover_image_url: string | null;
+}
+
 interface ProductRow {
   id: string;
   name: string;
@@ -59,11 +68,12 @@ export default async function HomePage() {
 
   let dbCategories: { name: string; slug: string; image_url?: string | null }[] = [];
   const vitrineSections: VitrineSection[] = [];
+  let activePromotions: PromoRow[] = [];
 
   try {
     const supabase = await createClient();
 
-    const [categoriesResult, vitrinesResult] = await Promise.all([
+    const [categoriesResult, vitrinesResult, promosResult] = await Promise.all([
       supabase
         .from("categories")
         .select("name, slug, image_url")
@@ -74,7 +84,17 @@ export default async function HomePage() {
         .select("id, title, position, vitrine_products(product_id, position)")
         .eq("is_active", true)
         .order("position", { ascending: true }),
+      supabase
+        .from("promotions")
+        .select("id, title, slug, subtitle, discount_percent, cover_image_url")
+        .eq("is_active", true)
+        .order("position", { ascending: true })
+        .limit(4),
     ]);
+
+    if (promosResult.data && promosResult.data.length > 0) {
+      activePromotions = promosResult.data as PromoRow[];
+    }
 
     if (categoriesResult.data && categoriesResult.data.length > 0) {
       dbCategories = categoriesResult.data as { name: string; slug: string; image_url?: string | null }[];
@@ -139,8 +159,74 @@ export default async function HomePage() {
       <Header />
 
       <main>
+        {/* Promoções */}
+        {activePromotions.length > 0 && (
+          <section className="bg-[#0a0a0a] px-4 pt-4 pb-0 lg:px-8">
+            <div className="mx-auto max-w-content">
+              <div
+                className={`grid gap-3 ${
+                  activePromotions.length === 1
+                    ? "grid-cols-1"
+                    : activePromotions.length === 2
+                    ? "grid-cols-1 sm:grid-cols-2"
+                    : activePromotions.length === 3
+                    ? "grid-cols-1 sm:grid-cols-3"
+                    : "grid-cols-2 lg:grid-cols-4"
+                }`}
+              >
+                {activePromotions.map((promo) => (
+                  <Link
+                    key={promo.id}
+                    href={`/promocao/${promo.slug}`}
+                    className="group relative overflow-hidden rounded-xl bg-[#111] border border-[#2a2a2a] hover:border-[#ffd600]/40 transition-all"
+                  >
+                    {promo.cover_image_url ? (
+                      <div className="relative h-32 sm:h-36 overflow-hidden">
+                        <Image
+                          src={promo.cover_image_url}
+                          alt={promo.title}
+                          fill
+                          className="object-cover transition-transform duration-300 group-hover:scale-105"
+                          unoptimized
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                        {promo.discount_percent && (
+                          <span className="absolute top-2 right-2 rounded-full bg-red-600 px-2 py-0.5 text-xs font-bold text-white shadow">
+                            -{promo.discount_percent}%
+                          </span>
+                        )}
+                        <div className="absolute bottom-0 left-0 w-full px-3 pb-2">
+                          <p className="text-sm font-semibold text-white truncate">{promo.title}</p>
+                          {promo.subtitle && (
+                            <p className="text-xs text-gray-300 truncate">{promo.subtitle}</p>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex h-32 sm:h-36 items-end bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] px-3 pb-3">
+                        {promo.discount_percent && (
+                          <span className="absolute top-2 right-2 rounded-full bg-red-600 px-2 py-0.5 text-xs font-bold text-white shadow">
+                            -{promo.discount_percent}%
+                          </span>
+                        )}
+                        <div>
+                          <p className="text-sm font-semibold text-white truncate">{promo.title}</p>
+                          {promo.subtitle && (
+                            <p className="text-xs text-gray-400 truncate">{promo.subtitle}</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* Hero */}
-        <section className="relative overflow-hidden bg-brand-black px-4 py-20 lg:px-8 lg:py-32">
+        <section className={`relative overflow-hidden bg-brand-black px-4 lg:px-8 ${activePromotions.length > 0 ? "py-12 lg:py-20" : "py-20 lg:py-32"}`}>
           <div className="absolute inset-0 opacity-5">
             <div
               className="absolute inset-0"
