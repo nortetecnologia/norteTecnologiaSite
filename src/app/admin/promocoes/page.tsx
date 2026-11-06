@@ -1,6 +1,7 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { PromocoesClient, type PromotionData, type ProductOption } from "./PromocoesClient";
 
+export const dynamic = "force-dynamic";
 export const metadata = { title: "Promoções — Norte Admin" };
 
 export default async function PromocoesPage() {
@@ -8,7 +9,7 @@ export default async function PromocoesPage() {
   let products: ProductOption[] = [];
 
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
 
     const [promosResult, productsResult] = await Promise.all([
       supabase

@@ -27,7 +27,8 @@ async function getAuthClient() {
 
 function revalidate() {
   revalidatePath("/admin/promocoes");
-  revalidatePath("/");
+  revalidatePath("/", "layout");
+  revalidatePath("/promocao", "layout");
 }
 
 export async function createPromotion(formData: FormData): Promise<PromoActionResult> {
