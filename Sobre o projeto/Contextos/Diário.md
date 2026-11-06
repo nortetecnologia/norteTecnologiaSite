@@ -8,8 +8,8 @@
 
 ## 1. Estado atual do projeto
 
-- **Estágio:** Admin completo + Páginas públicas completas + Carrinho + Checkout + Formas de pagamento configuráveis + Menu mobile funcional + Header redesenhado + Upload de imagens via Cloudinary (produtos e categorias) + Drawer de categorias + Sistema de promoções + Busca pública + Cabeçalhos de segurança HTTP + Filtros is_active em todas as páginas públicas.
-- **Última atividade:** 2026-11-06 — Segunda auditoria: filtros `is_active` em categorias/subcategorias/promoções, cabeçalhos de segurança HTTP, relatórios admin usa `createAdminClient()`, link de categoria usa slug correto.
+- **Estágio:** Admin completo + Páginas públicas completas + Carrinho + Checkout + Formas de pagamento configuráveis + Menu mobile funcional + Header redesenhado + Upload de imagens via Cloudinary (produtos e categorias) + Drawer de categorias + Sistema de promoções + Busca pública + Cabeçalhos de segurança HTTP + Filtros is_active em todas as páginas públicas + **PWA instalável (manifest, service worker, banner de instalação)**.
+- **Última atividade:** 2026-11-06 — PWA: `manifest.json`, `sw.js`, `InstallPrompt` (3 opções de instalação com localStorage + TTL 7 dias), metadados PWA no layout.
 - **Situação geral:** Deploy funcional na Vercel. Build 100% limpo (zero erros tsc, zero erros build).
 - **Próxima etapa:** Monitorar desempenho em produção. Implementar sistema de eventos/analytics quando necessário.
 
@@ -18,13 +18,31 @@
 ## 2. Última atualização
 
 - **Data:** 2026-11-06
-- **Atividade:** Segunda auditoria de bugs e segurança.
-- **Resultado:** tsc limpo, build OK (15 páginas dinâmicas, exit 0).
+- **Atividade:** PWA — manifest, service worker e banner de instalação.
+- **Resultado:** tsc limpo, build OK (18 páginas dinâmicas, exit 0).
 - **Situação:** Pronto para merge e deploy.
 
 ---
 
 ## 3. Implementações concluídas
+
+### 2026-11-06 — PWA: manifest, service worker e banner de instalação
+
+- **Objetivo:** Tornar o site instalável como app direto do browser (PWA), sem App Store.
+- **Implementação:**
+  1. `public/manifest.json` — Web App Manifest: `display: standalone`, `theme_color: #ffd600`, `background_color: #0a0a0a`, ícone `logo.png`, orientação portrait, `lang: pt-BR`.
+  2. `public/sw.js` — Service Worker mínimo: network-first para navegação (não quebra Next.js ISR/SSR), fallback para `/` quando offline. `skipWaiting` + `clients.claim` para ativação imediata.
+  3. `src/components/ui/InstallPrompt.tsx` — Componente client-side que:
+     - Registra o SW ao montar (sempre, independente da resposta do usuário).
+     - Captura evento `beforeinstallprompt` e exibe banner slide-up.
+     - 3 opções: **Instalar agora** (chama `prompt.prompt()`), **Mais tarde** (armazena timestamp, re-exibe após 7 dias), **Nunca** (armazena permanente).
+     - localStorage key `nt_pwa_prompt` armazena apenas a decisão do usuário (não o prompt).
+  4. `src/app/layout.tsx` — Adicionados: `Viewport` export com `themeColor: #ffd600`, `manifest: "/manifest.json"`, `appleWebApp` metadata, import e renderização de `<InstallPrompt />`.
+  5. `tailwind.config.ts` — Adicionada keyframe `slide-up` e animação `animate-slide-up`.
+- **Limitações conhecidas:** `beforeinstallprompt` não é suportado no iOS Safari — banner não aparece lá. Usuário iOS pode instalar manualmente via "Adicionar à Tela de Início" no menu compartilhar do Safari.
+- **Verificações executadas:** `tsc --noEmit` OK, `npm run build` OK (18 páginas dinâmicas, exit 0).
+- **Arquivos criados:** `public/manifest.json`, `public/sw.js`, `src/components/ui/InstallPrompt.tsx`.
+- **Arquivos modificados:** `src/app/layout.tsx`, `tailwind.config.ts`.
 
 ### 2026-11-06 — Segunda auditoria de segurança e bugs
 

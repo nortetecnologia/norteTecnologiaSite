@@ -1,0 +1,27 @@
+{
+  "name": "Norte Tecnologia",
+  "short_name": "Norte Tec",
+  "description": "Computadores, notebooks, periféricos e serviços técnicos de informática.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0a0a0a",
+  "theme_color": "#ffd600",
+  "lang": "pt-BR",
+  "categories": ["shopping", "technology"],
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
