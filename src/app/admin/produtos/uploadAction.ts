@@ -28,20 +28,10 @@ export async function uploadToCloudinary(formData: FormData): Promise<UploadResu
     const timestamp = Math.round(Date.now() / 1000);
     const folder = "norte-tecnologia/produtos";
 
-    // Parâmetros assinados (ordem alfabética obrigatória para a assinatura)
-    const params: Record<string, string> = {
-      folder,
-      signature_algorithm: "sha256",
-      timestamp: String(timestamp),
-    };
-
-    const paramsToSign = Object.keys(params)
-      .sort()
-      .map((k) => `${k}=${params[k]}`)
-      .join("&");
+    const paramsToSign = `folder=${folder}&timestamp=${timestamp}`;
 
     const signature = crypto
-      .createHash("sha256")
+      .createHash("sha1")
       .update(paramsToSign + apiSecret)
       .digest("hex");
 
@@ -51,7 +41,6 @@ export async function uploadToCloudinary(formData: FormData): Promise<UploadResu
     uploadForm.append("api_key", apiKey);
     uploadForm.append("signature", signature);
     uploadForm.append("folder", folder);
-    uploadForm.append("signature_algorithm", "sha256");
 
     const response = await fetch(
       `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
