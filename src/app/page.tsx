@@ -71,6 +71,7 @@ export default async function HomePage() {
   let dbCategories: { name: string; slug: string; image_url?: string | null }[] = [];
   const vitrineSections: VitrineSection[] = [];
   let activePromotions: PromoRow[] = [];
+  let fallbackProducts: VitrineSection["products"] = [];
 
   try {
     const supabase = await createClient();
@@ -147,6 +148,24 @@ export default async function HomePage() {
           }
         }
       }
+    }
+
+    // Fallback: se nenhuma vitrine com produtos, busca produtos diretamente
+    if (vitrineSections.length === 0) {
+      const { data: directProducts } = await supabase
+        .from("products")
+        .select("id, name, slug, price, product_images(url, is_primary)")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .limit(20);
+
+      fallbackProducts = ((directProducts ?? []) as ProductRow[]).map((p) => {
+        const primary =
+          p.product_images?.find((i) => i.is_primary)?.url ??
+          p.product_images?.[0]?.url ??
+          null;
+        return { id: p.id, name: p.name, slug: p.slug, price: p.price, primaryImageUrl: primary };
+      });
     }
   } catch {
     // DB não disponível — usa fallback estático
@@ -253,29 +272,30 @@ export default async function HomePage() {
               </div>
             </section>
           ))
-        ) : (
-          /* Placeholder enquanto não há vitrines */
+        ) : fallbackProducts.length > 0 ? (
+          /* Fallback: produtos diretos quando não há vitrines configuradas */
           <section className="px-4 py-8 lg:px-8">
             <div className="mx-auto max-w-content">
               <div className="mb-5 flex items-center justify-between">
-                <h2 className="text-xl font-bold text-white lg:text-2xl">Produtos em Destaque</h2>
+                <h2 className="text-xl font-bold text-white lg:text-2xl">Produtos</h2>
                 <Link href="/categoria" className="text-sm font-medium text-brand-yellow hover:underline">
                   Ver todos →
                 </Link>
               </div>
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <div key={i} className="rounded-lg border border-brand-gray-mid bg-brand-gray-dark p-4" aria-hidden="true">
-                    <div className="mb-3 h-36 animate-pulse rounded-md bg-brand-gray-mid" />
-                    <div className="mb-2 h-4 w-3/4 animate-pulse rounded bg-brand-gray-mid" />
-                    <div className="mb-3 h-3 w-1/2 animate-pulse rounded bg-brand-gray-mid" />
-                    <div className="h-6 w-1/3 animate-pulse rounded bg-brand-gray-mid" />
-                  </div>
+                {fallbackProducts.map((p) => (
+                  <ProductCard
+                    key={p.id}
+                    slug={p.slug}
+                    name={p.name}
+                    price={p.price}
+                    primaryImageUrl={p.primaryImageUrl}
+                  />
                 ))}
               </div>
             </div>
           </section>
-        )}
+        ) : null}
 
         {/* Categorias */}
         <section className="border-t border-brand-gray-mid px-4 py-10 lg:px-8">
