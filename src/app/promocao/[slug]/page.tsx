@@ -49,7 +49,8 @@ export default async function PromoPage({ params }: Props) {
     const { data: rawProducts } = await supabase
       .from("products")
       .select("id, name, slug, price, product_images(url, is_primary)")
-      .in("id", productIds);
+      .in("id", productIds)
+      .eq("is_active", true);
 
     type PRow = { id: string; name: string; slug: string; price: number; product_images: { url: string; is_primary: boolean }[] };
     const map = new Map<string, PRow>();

@@ -38,6 +38,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       .from("categories")
       .select("id, name")
       .eq("slug", slug)
+      .eq("is_active", true)
       .single();
     if (!catData) return { title: "Subcategoria | Norte Tecnologia" };
 
@@ -46,6 +47,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       .select("name")
       .eq("slug", subcategoria)
       .eq("category_id", catData.id)
+      .eq("is_active", true)
       .single();
 
     if (subData) {
@@ -74,6 +76,7 @@ export default async function SubcategoryPage({ params }: PageProps) {
       .from("categories")
       .select("id, name, slug")
       .eq("slug", slug)
+      .eq("is_active", true)
       .single();
 
     if (!catData) notFound();
@@ -84,6 +87,7 @@ export default async function SubcategoryPage({ params }: PageProps) {
       .select("id, name, slug")
       .eq("slug", subcategoria)
       .eq("category_id", category.id)
+      .eq("is_active", true)
       .single();
 
     if (!subData) notFound();

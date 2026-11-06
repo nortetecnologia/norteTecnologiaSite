@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Relatórios | Admin — Norte Tecnologia",
@@ -9,6 +11,7 @@ export const metadata: Metadata = {
 interface CategoryStat {
   id: string;
   name: string;
+  slug: string;
   total: number;
   active: number;
   out_of_stock: number;
@@ -38,7 +41,7 @@ interface NoImageProduct {
 }
 
 export default async function AdminRelatoriosPage() {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const [
     productsResult,
@@ -50,7 +53,7 @@ export default async function AdminRelatoriosPage() {
     supabase.from("products").select("id, is_active, stock"),
     supabase
       .from("categories")
-      .select("id, name, products(id, is_active, stock)")
+      .select("id, name, slug, products(id, is_active, stock)")
       .order("name"),
     supabase
       .from("vitrines")
@@ -80,6 +83,7 @@ export default async function AdminRelatoriosPage() {
   type RawCategory = {
     id: string;
     name: string;
+    slug: string;
     products: { id: string; is_active: boolean; stock: number }[] | null;
   };
   const categoryStats: CategoryStat[] = ((categoriesResult.data ?? []) as unknown as RawCategory[]).map((cat) => {
@@ -87,6 +91,7 @@ export default async function AdminRelatoriosPage() {
     return {
       id: cat.id,
       name: cat.name,
+      slug: cat.slug,
       total: prods.length,
       active: prods.filter((p) => p.is_active).length,
       out_of_stock: prods.filter((p) => p.is_active && p.stock === 0).length,
@@ -274,7 +279,7 @@ export default async function AdminRelatoriosPage() {
                   <tr key={cat.id} className="hover:bg-[#1f1f1f] transition-colors">
                     <td className="py-3 pr-4">
                       <Link
-                        href={`/categoria/${encodeURIComponent(cat.name.toLowerCase().replace(/\s+/g, "-"))}`}
+                        href={`/categoria/${cat.slug}`}
                         target="_blank"
                         className="text-white hover:text-[#ffd600] transition-colors"
                       >
