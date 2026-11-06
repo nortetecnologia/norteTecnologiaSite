@@ -56,6 +56,8 @@ export async function createProduct(
     const categoryId = (formData.get("category_id") as string) || null;
     const subcategoryId = (formData.get("subcategory_id") as string) || null;
     const imageUrl = (formData.get("image_url") as string)?.trim() || null;
+    const rawType = (formData.get("product_type") as string) || "product";
+    const productType = rawType === "service" ? "service" : "product";
 
     // Gerar slug único
     const baseSlug = toSlug(name);
@@ -81,6 +83,7 @@ export async function createProduct(
         stock: stockRaw,
         category_id: categoryId || null,
         subcategory_id: subcategoryId || null,
+        product_type: productType,
         is_active: true,
         updated_at: new Date().toISOString(),
       })
@@ -137,6 +140,8 @@ export async function updateProduct(
     const subcategoryId = (formData.get("subcategory_id") as string) || null;
     const imageUrl = (formData.get("image_url") as string)?.trim() || null;
     const isActive = formData.get("is_active") === "true";
+    const rawType = (formData.get("product_type") as string) || "product";
+    const productType = rawType === "service" ? "service" : "product";
 
     const { error: updateError } = await supabase
       .from("products")
@@ -149,6 +154,7 @@ export async function updateProduct(
         stock: stockRaw,
         category_id: categoryId || null,
         subcategory_id: subcategoryId || null,
+        product_type: productType,
         is_active: isActive,
         updated_at: new Date().toISOString(),
       })
