@@ -19,6 +19,8 @@ export interface ProductData {
   description: string | null;
   brand: string | null;
   sku: string | null;
+  barcode: string | null;
+  internal_code: string | null;
   price: number;
   stock: number;
   category_id: string | null;
@@ -84,6 +86,8 @@ export function ProdutosClient({ products, categories }: Props) {
   const [formSubcategoryId, setFormSubcategoryId] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [formProductType, setFormProductType] = useState<"product" | "service">("product");
+  const [formBarcode, setFormBarcode] = useState("");
+  const [formInternalCode, setFormInternalCode] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [uploadState, setUploadState] = useState<"idle" | "uploading" | "error">("idle");
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -96,6 +100,8 @@ export function ProdutosClient({ products, categories }: Props) {
     setFormSubcategoryId("");
     setIsActive(true);
     setFormProductType("product");
+    setFormBarcode("");
+    setFormInternalCode("");
     setFormError(null);
     setImageUrl("");
     setUploadState("idle");
@@ -108,6 +114,8 @@ export function ProdutosClient({ products, categories }: Props) {
     setFormSubcategoryId(product.subcategory_id ?? "");
     setIsActive(product.is_active);
     setFormProductType(product.product_type ?? "product");
+    setFormBarcode(product.barcode ?? "");
+    setFormInternalCode(product.internal_code ?? "");
     setFormError(null);
     setImageUrl(product.primary_image_url ?? "");
     setUploadState("idle");
@@ -301,6 +309,12 @@ export function ProdutosClient({ products, categories }: Props) {
                         {product.subcategory_name ? ` › ${product.subcategory_name}` : ""}
                       </span>
                     )}
+                    {product.internal_code && (
+                      <span className="font-mono text-[#4b5563]">#{product.internal_code}</span>
+                    )}
+                    {product.barcode && (
+                      <span className="font-mono text-[#4b5563]" title="Código de barras">|{product.barcode}|</span>
+                    )}
                   </div>
                 </div>
 
@@ -463,6 +477,51 @@ export function ProdutosClient({ products, categories }: Props) {
                     type="text"
                     defaultValue={modal.kind === "edit" ? (modal.product.sku ?? "") : ""}
                     placeholder="Ex: MG-001"
+                    className={inputCls}
+                  />
+                </div>
+              </div>
+
+              {/* Códigos — barcode (produto) + código interno (ambos) */}
+              <div className="grid gap-4 sm:grid-cols-2">
+                {formProductType === "product" && (
+                  <div>
+                    <label htmlFor="prod-barcode" className={labelCls}>
+                      Código de Barras
+                      <span className="ml-1.5 text-[10px] font-normal text-[#4b5563]">leitor compatível</span>
+                    </label>
+                    <div className="relative">
+                      <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-[#4b5563]" aria-hidden="true">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M3 5v14M7 5v14M11 5v14M15 5v10M19 5v10M15 17h4v2h-4z"/>
+                        </svg>
+                      </span>
+                      <input
+                        id="prod-barcode"
+                        name="barcode"
+                        type="text"
+                        inputMode="numeric"
+                        autoComplete="off"
+                        value={formBarcode}
+                        onChange={(e) => setFormBarcode(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
+                        placeholder="Ex: 7891234567890"
+                        className={`${inputCls} pl-8`}
+                      />
+                    </div>
+                  </div>
+                )}
+                <div className={formProductType === "service" ? "sm:col-span-2" : ""}>
+                  <label htmlFor="prod-internal-code" className={labelCls}>Código Interno</label>
+                  <input
+                    id="prod-internal-code"
+                    name="internal_code"
+                    type="text"
+                    autoComplete="off"
+                    value={formInternalCode}
+                    onChange={(e) => setFormInternalCode(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
+                    placeholder="Ex: SVC-001"
                     className={inputCls}
                   />
                 </div>

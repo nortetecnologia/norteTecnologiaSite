@@ -58,6 +58,8 @@ export async function createProduct(
     const imageUrl = (formData.get("image_url") as string)?.trim() || null;
     const rawType = (formData.get("product_type") as string) || "product";
     const productType = rawType === "service" ? "service" : "product";
+    const barcode = productType === "product" ? ((formData.get("barcode") as string)?.trim() || null) : null;
+    const internalCode = (formData.get("internal_code") as string)?.trim() || null;
 
     // Gerar slug único
     const baseSlug = toSlug(name);
@@ -79,6 +81,8 @@ export async function createProduct(
         description,
         brand,
         sku: sku || null,
+        barcode,
+        internal_code: internalCode,
         price,
         stock: stockRaw,
         category_id: categoryId || null,
@@ -142,6 +146,8 @@ export async function updateProduct(
     const isActive = formData.get("is_active") === "true";
     const rawType = (formData.get("product_type") as string) || "product";
     const productType = rawType === "service" ? "service" : "product";
+    const barcode = productType === "product" ? ((formData.get("barcode") as string)?.trim() || null) : null;
+    const internalCode = (formData.get("internal_code") as string)?.trim() || null;
 
     const { error: updateError } = await supabase
       .from("products")
@@ -150,6 +156,8 @@ export async function updateProduct(
         description,
         brand,
         sku: sku || null,
+        barcode,
+        internal_code: internalCode,
         price,
         stock: stockRaw,
         category_id: categoryId || null,
