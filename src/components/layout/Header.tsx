@@ -34,27 +34,30 @@ export default async function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-brand-gray-mid bg-brand-black/95 backdrop-blur-sm">
-      {/* Row 1: Logo + SearchBar + WhatsApp + Cart */}
-      <div className="mx-auto flex h-[88px] w-full max-w-[1600px] items-center gap-5 px-6 lg:px-10">
-        <Link href="/" className="flex flex-shrink-0 items-center gap-2.5" aria-label="Ir para a página inicial">
+      {/* Row 1: Logo + (SearchBar desktop) + WhatsApp + Cart */}
+      <div className="mx-auto flex w-full max-w-[1600px] items-center gap-4 px-4 py-3 sm:gap-5 sm:px-6 sm:h-[88px] sm:py-0 lg:px-10">
+        <Link href="/" className="flex flex-shrink-0 items-center gap-2" aria-label="Ir para a página inicial">
           <Image
             src="/logo.png"
             alt="Norte Tecnologia"
             width={44}
             height={44}
-            className="h-10 w-10 object-contain"
+            className="h-9 w-9 object-contain sm:h-10 sm:w-10"
             priority
           />
-          <span className="text-lg font-bold text-white">
+          <span className="text-base font-bold text-white sm:text-lg">
             Norte <span className="text-brand-yellow">Tecnologia</span>
           </span>
         </Link>
 
-        <Suspense fallback={<div className="flex-1 h-10 animate-pulse rounded-lg bg-brand-gray-dark" />}>
-          <SearchBar />
-        </Suspense>
+        {/* SearchBar — só visível no desktop (sm+) aqui; no mobile fica na row abaixo */}
+        <div className="hidden sm:flex flex-1">
+          <Suspense fallback={<div className="flex-1 h-10 animate-pulse rounded-lg bg-brand-gray-dark" />}>
+            <SearchBar />
+          </Suspense>
+        </div>
 
-        <div className="flex flex-shrink-0 items-center gap-3">
+        <div className="ml-auto flex flex-shrink-0 items-center gap-3 sm:ml-0">
           <a
             href={whatsappUrl}
             target="_blank"
@@ -76,9 +79,16 @@ export default async function Header() {
         </div>
       </div>
 
-      {/* Row 2: Hamburger + HeaderItemsBar */}
+      {/* Row mobile: SearchBar em linha própria, largura total — oculta em sm+ */}
+      <div className="block sm:hidden border-t border-brand-gray-mid/40 px-4 py-2">
+        <Suspense fallback={<div className="h-10 w-full animate-pulse rounded-lg bg-brand-gray-dark" />}>
+          <SearchBar />
+        </Suspense>
+      </div>
+
+      {/* Row final: Hamburger + HeaderItemsBar */}
       <div className="border-t border-brand-gray-mid/50">
-        <div className="mx-auto flex h-11 w-full max-w-[1600px] items-center gap-3 px-6 lg:px-10">
+        <div className="mx-auto flex h-11 w-full max-w-[1600px] items-center gap-3 px-4 sm:px-6 lg:px-10">
           <HamburgerMenu categories={categories} />
           <div className="h-5 w-px bg-brand-gray-mid flex-shrink-0" aria-hidden="true" />
           <Suspense fallback={null}>
