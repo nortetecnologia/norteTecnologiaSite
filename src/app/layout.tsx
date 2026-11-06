@@ -11,7 +11,7 @@ const inter = Inter({
 });
 
 export const viewport: Viewport = {
-  themeColor: "#ffd600",
+  themeColor: "#0a0a0a",
   width: "device-width",
   initialScale: 1,
 };
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: "Norte Tecnologia",
-    statusBarStyle: "black-translucent",
+    statusBarStyle: "black",
   },
   openGraph: {
     title: "Norte Tecnologia — Informática e Serviços",
