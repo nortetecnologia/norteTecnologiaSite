@@ -56,15 +56,15 @@ function timeToMinutes(time: string): number {
 }
 
 // Checks if the store is currently open.
-// Uses Belém/Pará timezone (UTC-3, no DST).
+// Uses Rorainópolis/Roraima timezone (UTC-4, America/Manaus, no DST).
 export function isStoreOpen(
   schedule: WeekSchedule | null | undefined
 ): boolean {
   if (!schedule) return false;
 
-  // Shift UTC time to UTC-3 (Belém — no daylight saving)
+  // Shift UTC time to UTC-4 (Roraima/Manaus — no daylight saving)
   const now = new Date();
-  const belemDate = new Date(now.getTime() - 3 * 60 * 60 * 1000);
+  const belemDate = new Date(now.getTime() - 4 * 60 * 60 * 1000);
 
   // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
   const jsDay = belemDate.getUTCDay();
@@ -104,7 +104,7 @@ export function getTodayHours(schedule: WeekSchedule | null | undefined): string
   if (!schedule) return null;
 
   const now = new Date();
-  const belemDate = new Date(now.getTime() - 3 * 60 * 60 * 1000);
+  const belemDate = new Date(now.getTime() - 4 * 60 * 60 * 1000);
   const jsDay = belemDate.getUTCDay();
   const dayIndexToKey: WeekDay[] = [
     "sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday",

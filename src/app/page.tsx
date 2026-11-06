@@ -9,6 +9,7 @@ import { ProductCard } from "@/components/ui/ProductCard";
 import { PromoBanner } from "@/components/ui/PromoBanner";
 import { getStoreSettings, buildWhatsAppUrl } from "@/lib/store-settings";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const STATIC_CATEGORIES = [
   { name: "Computadores", icon: "🖥️", slug: "computadores" },
@@ -76,6 +77,7 @@ export default async function HomePage() {
 
   try {
     const supabase = await createClient();
+    const adminClient = createAdminClient();
 
     const [categoriesResult, vitrinesResult, promosResult] = await Promise.all([
       supabase
@@ -88,7 +90,7 @@ export default async function HomePage() {
         .select("id, title, position, vitrine_products(product_id, position)")
         .eq("is_active", true)
         .order("position", { ascending: true }),
-      supabase
+      adminClient
         .from("promotions")
         .select("id, title, slug, subtitle, discount_percent, cover_image_url")
         .eq("is_active", true)
