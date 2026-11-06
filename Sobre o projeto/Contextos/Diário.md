@@ -8,23 +8,36 @@
 
 ## 1. Estado atual do projeto
 
-- **Estágio:** Admin completo + Páginas públicas completas + Carrinho + Checkout + Formas de pagamento configuráveis + Menu mobile funcional + Header redesenhado (full-width, h-88px, centralizado) + Upload de imagens via Cloudinary (produtos e categorias) + Drawer de categorias corrigido + Sistema de promoções completo + Busca pública com Header/Footer.
-- **Última atividade:** 2026-11-06 — Auditoria de bugs: busca sem Header/Footer corrigida, produto inativo acessível corrigido, busca expandida para marca+descrição, revalidação de homepage adicionada nas actions de produtos e categorias, migration 009 criada.
-- **Situação geral:** Deploy funcional na Vercel. **Pendente:** aplicar migration 009 no Supabase SQL Editor para habilitar imagem nas categorias.
-- **Próxima etapa:** Aplicar migration 009 → cadastrar categorias com imagens → montar vitrines de produtos via `/admin/vitrines`.
+- **Estágio:** Admin completo + Páginas públicas completas + Carrinho + Checkout + Formas de pagamento configuráveis + Menu mobile funcional + Header redesenhado + Upload de imagens via Cloudinary (produtos e categorias) + Drawer de categorias + Sistema de promoções + Busca pública + Cabeçalhos de segurança HTTP + Filtros is_active em todas as páginas públicas.
+- **Última atividade:** 2026-11-06 — Segunda auditoria: filtros `is_active` em categorias/subcategorias/promoções, cabeçalhos de segurança HTTP, relatórios admin usa `createAdminClient()`, link de categoria usa slug correto.
+- **Situação geral:** Deploy funcional na Vercel. Build 100% limpo (zero erros tsc, zero erros build).
+- **Próxima etapa:** Monitorar desempenho em produção. Implementar sistema de eventos/analytics quando necessário.
 
 ---
 
 ## 2. Última atualização
 
 - **Data:** 2026-11-06
-- **Atividade:** Auditoria de bugs e correções — busca com Header/Footer, produto inativo corrigido, revalidações, migration 009.
-- **Resultado:** tsc limpo, build OK (18 páginas). Merge e push para main/Vercel.
-- **Situação:** Deploy em andamento na Vercel.
+- **Atividade:** Segunda auditoria de bugs e segurança.
+- **Resultado:** tsc limpo, build OK (15 páginas dinâmicas, exit 0).
+- **Situação:** Pronto para merge e deploy.
 
 ---
 
 ## 3. Implementações concluídas
+
+### 2026-11-06 — Segunda auditoria de segurança e bugs
+
+- **Objetivo:** Auditoria completa de todas as páginas públicas e admin.
+- **Bugs corrigidos:**
+  1. `/categoria/[slug]` não filtrava categoria e produtos por `is_active` — admin autenticado navegando o site público via cookie would see inactive data. Corrigido em query principal e `generateMetadata`.
+  2. `/categoria/[slug]/[subcategoria]` — mesma falha em categoria e subcategoria. Corrigido.
+  3. `/promocao/[slug]` — produtos na promoção sem `.eq("is_active", true)`. Corrigido.
+  4. `next.config.ts` — sem cabeçalhos de segurança HTTP. Adicionados: `X-Content-Type-Options`, `X-Frame-Options`, `X-XSS-Protection`, `Referrer-Policy`, `Strict-Transport-Security`, `Permissions-Policy`.
+  5. `admin/relatorios/page.tsx` — usava `createClient()` anon em vez de `createAdminClient()` service_role. Substituído + `export const dynamic = "force-dynamic"` para evitar pré-renderização estática sem env vars.
+  6. `admin/relatorios/page.tsx` — link de categoria gerado a partir do nome transformado em vez do `slug` do banco. Corrigido para usar `cat.slug`.
+- **Verificações executadas:** `tsc --noEmit` OK, `npm run build` OK (15 páginas dinâmicas, exit 0).
+- **Arquivos modificados:** `src/app/categoria/[slug]/page.tsx`, `src/app/categoria/[slug]/[subcategoria]/page.tsx`, `src/app/promocao/[slug]/page.tsx`, `next.config.ts`, `src/app/admin/relatorios/page.tsx`.
 
 ### 2026-11-06 — Auditoria de bugs + correções
 

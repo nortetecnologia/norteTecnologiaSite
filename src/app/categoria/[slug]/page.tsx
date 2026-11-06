@@ -32,6 +32,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       .from("categories")
       .select("name")
       .eq("slug", slug)
+      .eq("is_active", true)
       .single();
     if (data) {
       return {
@@ -58,6 +59,7 @@ export default async function CategoryPage({ params }: PageProps) {
       .from("categories")
       .select("id, name, slug")
       .eq("slug", slug)
+      .eq("is_active", true)
       .single();
 
     if (!catData) {
@@ -70,6 +72,7 @@ export default async function CategoryPage({ params }: PageProps) {
       .from("products")
       .select("id, name, slug, price, product_images(url, is_primary)")
       .eq("category_id", category.id)
+      .eq("is_active", true)
       .order("name", { ascending: true });
 
     products = ((productsData ?? []) as ProductRow[]).map((p) => {
