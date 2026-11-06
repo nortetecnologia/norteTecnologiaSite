@@ -91,6 +91,7 @@ export function ProdutosClient({ products, categories }: Props) {
   const [imageUrl, setImageUrl] = useState("");
   const [uploadState, setUploadState] = useState<"idle" | "uploading" | "error">("idle");
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [previewMode, setPreviewMode] = useState<"product" | "card">("product");
 
   const subcategoryOptions =
     categories.find((c) => c.id === formCategoryId)?.subcategories ?? [];
@@ -106,6 +107,7 @@ export function ProdutosClient({ products, categories }: Props) {
     setImageUrl("");
     setUploadState("idle");
     setUploadError(null);
+    setPreviewMode("product");
     setModal({ kind: "create" });
   }
 
@@ -120,6 +122,7 @@ export function ProdutosClient({ products, categories }: Props) {
     setImageUrl(product.primary_image_url ?? "");
     setUploadState("idle");
     setUploadError(null);
+    setPreviewMode("product");
     setModal({ kind: "edit", product });
   }
 
@@ -623,42 +626,76 @@ export function ProdutosClient({ products, categories }: Props) {
                 <span className={labelCls}>Imagem Principal</span>
                 <input type="hidden" name="image_url" value={imageUrl} />
 
-                {/* Preview fiel à página do produto (aspect-square, object-contain, fundo preto) */}
+                {/* Preview duplo: página do produto + card na vitrine */}
                 <div className="mb-3">
-                  <p className="mb-1.5 text-[11px] text-[#4b5563]">
-                    Prévia — como exibido na página do produto
-                  </p>
-                  <div className="relative aspect-square w-full max-w-[260px] overflow-hidden rounded-lg bg-[#0a0a0a] border border-[#2a2a2a]">
-                    {imageUrl ? (
-                      <>
-                        <Image src={imageUrl} alt="Preview" fill className="object-contain" unoptimized />
-                        <button
-                          type="button"
-                          onClick={() => { setImageUrl(""); setUploadError(null); }}
-                          className="absolute right-2 top-2 rounded-md border border-[#3a3a3a] bg-[#1a1a1a]/90 px-2 py-1 text-[11px] text-[#9ca3af] backdrop-blur-sm transition-colors hover:border-red-800/40 hover:text-red-400"
-                        >
-                          Remover
-                        </button>
-                      </>
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center">
-                        <svg
-                          className="h-16 w-16 text-[#2a2a2a]"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                          aria-hidden="true"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={1}
-                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                          />
-                        </svg>
-                      </div>
-                    )}
+                  <div className="mb-2 flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setPreviewMode("product")}
+                      className={`px-2.5 py-1 text-[11px] rounded-md border transition-colors ${previewMode === "product" ? "border-[#ffd600] text-[#ffd600] bg-[#ffd600]/10" : "border-[#2a2a2a] text-[#4b5563] hover:border-[#3a3a3a]"}`}
+                    >
+                      Página do produto
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewMode("card")}
+                      className={`px-2.5 py-1 text-[11px] rounded-md border transition-colors ${previewMode === "card" ? "border-[#ffd600] text-[#ffd600] bg-[#ffd600]/10" : "border-[#2a2a2a] text-[#4b5563] hover:border-[#3a3a3a]"}`}
+                    >
+                      Card na vitrine
+                    </button>
                   </div>
+
+                  {previewMode === "product" ? (
+                    <div className="relative aspect-square w-full max-w-[200px] overflow-hidden rounded-lg bg-[#0a0a0a] border border-[#2a2a2a]">
+                      {imageUrl ? (
+                        <>
+                          <Image src={imageUrl} alt="Preview" fill className="object-contain" unoptimized />
+                          <button
+                            type="button"
+                            onClick={() => { setImageUrl(""); setUploadError(null); }}
+                            className="absolute right-2 top-2 rounded-md border border-[#3a3a3a] bg-[#1a1a1a]/90 px-2 py-1 text-[11px] text-[#9ca3af] backdrop-blur-sm transition-colors hover:border-red-800/40 hover:text-red-400"
+                          >
+                            Remover
+                          </button>
+                        </>
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center">
+                          <svg className="h-12 w-12 text-[#2a2a2a]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    /* Card preview — object-cover igual ao ProductCard na vitrine */
+                    <div className="w-full max-w-[160px] rounded-lg border border-[#2a2a2a] bg-[#111] overflow-hidden">
+                      <div className="relative aspect-square bg-[#0a0a0a] overflow-hidden">
+                        {imageUrl ? (
+                          <>
+                            <Image src={imageUrl} alt="Preview card" fill className="object-cover" unoptimized />
+                            <button
+                              type="button"
+                              onClick={() => { setImageUrl(""); setUploadError(null); }}
+                              className="absolute right-1 top-1 rounded border border-[#3a3a3a] bg-[#1a1a1a]/90 px-1.5 py-0.5 text-[10px] text-[#9ca3af] backdrop-blur-sm transition-colors hover:border-red-800/40 hover:text-red-400"
+                            >
+                              ×
+                            </button>
+                          </>
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center">
+                            <svg className="h-10 w-10 text-[#2a2a2a]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-2">
+                        <div className="mb-1.5 h-3 w-3/4 rounded bg-[#2a2a2a]" aria-hidden="true" />
+                        <div className="h-3 w-1/2 rounded bg-[#2a2a2a]" aria-hidden="true" />
+                        <div className="mt-1.5 h-3 w-1/3 rounded bg-[#ffd600]/20" aria-hidden="true" />
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Upload de arquivo do PC */}
