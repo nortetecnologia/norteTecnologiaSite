@@ -1,6 +1,8 @@
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { ProductCard } from "@/components/ui/ProductCard";
+import Header from "@/components/layout/Header";
+import Footer from "@/components/layout/Footer";
 
 interface Props {
   searchParams: Promise<{ q?: string }>;
@@ -18,8 +20,8 @@ async function SearchResults({ query }: { query: string }) {
   const supabase = await createClient();
   const { data: products } = await supabase
     .from("products")
-    .select("id, name, slug, price, product_images(url, is_primary)")
-    .ilike("name", `%${query}%`)
+    .select("id, name, slug, price, brand, product_images(url, is_primary)")
+    .or(`name.ilike.%${query}%,brand.ilike.%${query}%,description.ilike.%${query}%`)
     .eq("is_active", true)
     .order("name", { ascending: true })
     .limit(60);
@@ -30,6 +32,7 @@ async function SearchResults({ query }: { query: string }) {
     name: string;
     slug: string;
     price: number;
+    brand: string | null;
     product_images: ImgRow[];
   };
 
@@ -84,35 +87,43 @@ export default async function BuscaPage({ searchParams }: Props) {
   const query = params.q?.trim() ?? "";
 
   return (
-    <main className="mx-auto max-w-content px-4 py-8 lg:px-8">
-      <div className="mb-6">
-        <h1 className="text-xl font-bold text-white">
-          {query ? (
-            <>
-              Resultados para{" "}
-              <span className="text-brand-yellow">&ldquo;{query}&rdquo;</span>
-            </>
-          ) : (
-            "Pesquisar produtos"
-          )}
-        </h1>
-      </div>
+    <>
+      <Header />
 
-      <Suspense
-        fallback={
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-            {Array.from({ length: 10 }).map((_, i) => (
-              <div
-                key={i}
-                className="aspect-square animate-pulse rounded-lg bg-brand-gray-dark"
-                aria-hidden="true"
-              />
-            ))}
+      <main className="min-h-screen bg-brand-black">
+        <div className="mx-auto max-w-content px-4 py-8 lg:px-8">
+          <div className="mb-6">
+            <h1 className="text-xl font-bold text-white">
+              {query ? (
+                <>
+                  Resultados para{" "}
+                  <span className="text-brand-yellow">&ldquo;{query}&rdquo;</span>
+                </>
+              ) : (
+                "Pesquisar produtos"
+              )}
+            </h1>
           </div>
-        }
-      >
-        <SearchResults query={query} />
-      </Suspense>
-    </main>
+
+          <Suspense
+            fallback={
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                {Array.from({ length: 10 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="aspect-square animate-pulse rounded-lg bg-brand-gray-dark"
+                    aria-hidden="true"
+                  />
+                ))}
+              </div>
+            }
+          >
+            <SearchResults query={query} />
+          </Suspense>
+        </div>
+      </main>
+
+      <Footer />
+    </>
   );
 }
