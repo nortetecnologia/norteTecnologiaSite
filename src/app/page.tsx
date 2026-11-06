@@ -6,6 +6,7 @@ import Link from "next/link";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { ProductCard } from "@/components/ui/ProductCard";
+import { PromoBanner } from "@/components/ui/PromoBanner";
 import { getStoreSettings, buildWhatsAppUrl } from "@/lib/store-settings";
 import { createClient } from "@/lib/supabase/server";
 
@@ -181,71 +182,8 @@ export default async function HomePage() {
 
       <main className="bg-brand-black min-h-screen">
 
-        {/* Promoções — coladas ao topo */}
-        {activePromotions.length > 0 && (
-          <section className="bg-[#0a0a0a] px-4 pt-4 pb-4 lg:px-8">
-            <div className="mx-auto max-w-content">
-              <div
-                className={`grid gap-3 ${
-                  activePromotions.length === 1
-                    ? "grid-cols-1"
-                    : activePromotions.length === 2
-                    ? "grid-cols-1 sm:grid-cols-2"
-                    : activePromotions.length === 3
-                    ? "grid-cols-1 sm:grid-cols-3"
-                    : "grid-cols-2 lg:grid-cols-4"
-                }`}
-              >
-                {activePromotions.map((promo) => (
-                  <Link
-                    key={promo.id}
-                    href={`/promocao/${promo.slug}`}
-                    className="group relative overflow-hidden rounded-xl bg-[#111] border border-[#2a2a2a] hover:border-[#ffd600]/40 transition-all"
-                  >
-                    {promo.cover_image_url ? (
-                      <div className="relative h-32 sm:h-40 overflow-hidden">
-                        <Image
-                          src={promo.cover_image_url}
-                          alt={promo.title}
-                          fill
-                          className="object-cover transition-transform duration-300 group-hover:scale-105"
-                          unoptimized
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                        {promo.discount_percent && (
-                          <span className="absolute top-2 right-2 rounded-full bg-red-600 px-2 py-0.5 text-xs font-bold text-white shadow">
-                            -{promo.discount_percent}%
-                          </span>
-                        )}
-                        <div className="absolute bottom-0 left-0 w-full px-3 pb-2">
-                          <p className="text-sm font-semibold text-white truncate">{promo.title}</p>
-                          {promo.subtitle && (
-                            <p className="text-xs text-gray-300 truncate">{promo.subtitle}</p>
-                          )}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="relative flex h-32 sm:h-40 items-end bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] px-3 pb-3">
-                        {promo.discount_percent && (
-                          <span className="absolute top-2 right-2 rounded-full bg-red-600 px-2 py-0.5 text-xs font-bold text-white shadow">
-                            -{promo.discount_percent}%
-                          </span>
-                        )}
-                        <div>
-                          <p className="text-sm font-semibold text-white truncate">{promo.title}</p>
-                          {promo.subtitle && (
-                            <p className="text-xs text-gray-400 truncate">{promo.subtitle}</p>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
+        {/* Banner de promoções — full width, carrossel */}
+        <PromoBanner promotions={activePromotions} />
 
         {/* Vitrines dinâmicas — logo abaixo do topo */}
         {vitrineSections.length > 0 ? (
