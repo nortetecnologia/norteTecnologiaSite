@@ -42,6 +42,7 @@ function shouldShow(stored: Stored | null): boolean {
 export function InstallPrompt() {
   const deferredPrompt = useRef<BeforeInstallPromptEvent | null>(null);
   const [visible, setVisible] = useState(false);
+  const [installing, setInstalling] = useState(false);
 
   useEffect(() => {
     // Register service worker regardless of prompt preference
@@ -64,11 +65,16 @@ export function InstallPrompt() {
   async function handleInstall() {
     const p = deferredPrompt.current;
     if (!p) return;
-    await p.prompt();
-    const { outcome } = await p.userChoice;
-    if (outcome === "accepted") write({ decision: "installed" });
-    deferredPrompt.current = null;
-    setVisible(false);
+    setInstalling(true);
+    try {
+      await p.prompt();
+      const { outcome } = await p.userChoice;
+      if (outcome === "accepted") write({ decision: "installed" });
+    } finally {
+      deferredPrompt.current = null;
+      setInstalling(false);
+      setVisible(false);
+    }
   }
 
   function handleLater() {
@@ -117,19 +123,29 @@ export function InstallPrompt() {
           <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={handleInstall}
-              className="flex-1 min-w-[120px] rounded-lg bg-[#ffd600] px-4 py-2.5 text-sm font-semibold text-black hover:bg-[#f5cc00] active:scale-95 transition-all"
+              disabled={installing}
+              className="flex-1 min-w-[120px] rounded-lg bg-[#ffd600] px-4 py-2.5 text-sm font-semibold text-black hover:bg-[#f5cc00] active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              Instalar agora
+              {installing ? (
+                <>
+                  <span className="inline-block h-3.5 w-3.5 rounded-full border-2 border-black/30 border-t-black animate-spin" />
+                  Instalando…
+                </>
+              ) : (
+                "Instalar agora"
+              )}
             </button>
             <button
               onClick={handleLater}
-              className="flex-1 min-w-[100px] rounded-lg border border-[#3a3a3a] px-4 py-2.5 text-sm font-medium text-[#d1d5db] hover:border-[#555] hover:text-white active:scale-95 transition-all"
+              disabled={installing}
+              className="flex-1 min-w-[100px] rounded-lg border border-[#3a3a3a] px-4 py-2.5 text-sm font-medium text-[#d1d5db] hover:border-[#555] hover:text-white active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Mais tarde
             </button>
             <button
               onClick={handleNever}
-              className="px-3 py-2.5 text-xs text-[#6b7280] hover:text-[#9ca3af] active:scale-95 transition-all"
+              disabled={installing}
+              className="px-3 py-2.5 text-xs text-[#6b7280] hover:text-[#9ca3af] active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Nunca
             </button>
