@@ -1,6 +1,7 @@
 "use server";
 
 import crypto from "crypto";
+import { getCloudinaryCreds } from "@/lib/cloudinary";
 
 export type UploadResult = { url?: string; error?: string };
 
@@ -9,13 +10,9 @@ export async function uploadPromoImage(formData: FormData): Promise<UploadResult
     const file = formData.get("file") as File | null;
     if (!file) return { error: "Nenhum arquivo selecionado." };
 
-    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-    const apiKey = process.env.CLOUDINARY_API_KEY;
-    const apiSecret = process.env.CLOUDINARY_API_SECRET;
-
-    if (!cloudName || !apiKey || !apiSecret) {
-      return { error: "Cloudinary não configurado no servidor." };
-    }
+    const creds = getCloudinaryCreds();
+    if (!creds) return { error: "Cloudinary não configurado no servidor." };
+    const { cloudName, apiKey, apiSecret } = creds;
 
     if (!file.type.startsWith("image/")) {
       return { error: "Apenas imagens são permitidas (JPEG, PNG, WebP, etc.)." };
