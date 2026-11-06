@@ -31,6 +31,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       .from("products")
       .select("name, description")
       .eq("slug", slug)
+      .eq("is_active", true)
       .single();
     if (data) {
       return {
@@ -57,6 +58,7 @@ export default async function ProductPage({ params }: PageProps) {
         "id, name, slug, description, price, stock, category:categories(name, slug), product_images(url, is_primary)"
       )
       .eq("slug", slug)
+      .eq("is_active", true)
       .single();
 
     if (!data) notFound();

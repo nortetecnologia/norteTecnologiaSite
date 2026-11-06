@@ -30,6 +30,7 @@ async function getAuthClient() {
 
 function revalidate() {
   revalidatePath("/admin/produtos");
+  revalidatePath("/");
 }
 
 export async function createProduct(

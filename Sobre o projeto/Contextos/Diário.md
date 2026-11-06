@@ -8,23 +8,37 @@
 
 ## 1. Estado atual do projeto
 
-- **Estágio:** Admin completo + Páginas públicas completas + Carrinho + Checkout + Formas de pagamento configuráveis + Menu mobile funcional + Header redesenhado (full-width, h-88px, centralizado) + Upload de imagens via Cloudinary (produtos e categorias) + Drawer de categorias corrigido com expandir/recolher subcategorias.
-- **Última atividade:** 2026-11-05 — Drawer compactado (h-60px), categorias base + botão chevron para subcategorias, header centralizado e searchbar flex-1.
-- **Situação geral:** Deploy funcional na Vercel. **Pendente:** adicionar coluna `image_url text` na tabela `categories` no Supabase (para upload de imagem de categorias funcionar).
-- **Próxima etapa:** Adicionar coluna `image_url` na tabela `categories` via SQL (`ALTER TABLE categories ADD COLUMN IF NOT EXISTS image_url text;`) → cadastrar categorias com imagens → montar vitrines de produtos.
+- **Estágio:** Admin completo + Páginas públicas completas + Carrinho + Checkout + Formas de pagamento configuráveis + Menu mobile funcional + Header redesenhado (full-width, h-88px, centralizado) + Upload de imagens via Cloudinary (produtos e categorias) + Drawer de categorias corrigido + Sistema de promoções completo + Busca pública com Header/Footer.
+- **Última atividade:** 2026-11-06 — Auditoria de bugs: busca sem Header/Footer corrigida, produto inativo acessível corrigido, busca expandida para marca+descrição, revalidação de homepage adicionada nas actions de produtos e categorias, migration 009 criada.
+- **Situação geral:** Deploy funcional na Vercel. **Pendente:** aplicar migration 009 no Supabase SQL Editor para habilitar imagem nas categorias.
+- **Próxima etapa:** Aplicar migration 009 → cadastrar categorias com imagens → montar vitrines de produtos via `/admin/vitrines`.
 
 ---
 
 ## 2. Última atualização
 
-- **Data:** 2026-11-05
-- **Atividade:** Fix drawer HamburgerMenu (header compacto, categorias base + expandir subcategorias) + centralização header + fix SearchBar max-w.
-- **Resultado:** tsc limpo. Merge e push para main/Vercel.
-- **Situação:** Deploy em andamento na Vercel. Drawer exibe categorias base com chevron para expandir subcategorias. Header centralizado com SearchBar flex-1.
+- **Data:** 2026-11-06
+- **Atividade:** Auditoria de bugs e correções — busca com Header/Footer, produto inativo corrigido, revalidações, migration 009.
+- **Resultado:** tsc limpo, build OK (18 páginas). Merge e push para main/Vercel.
+- **Situação:** Deploy em andamento na Vercel.
 
 ---
 
 ## 3. Implementações concluídas
+
+### 2026-11-06 — Auditoria de bugs + correções
+
+- **Objetivo:** Identificar e corrigir bugs, vulnerabilidades e funcionalidades faltando.
+- **Bugs corrigidos:**
+  1. `/busca` não tinha `<Header />` e `<Footer />` — a página de busca renderizava sem navegação. Corrigido.
+  2. `/produto/[slug]` não filtrava por `is_active = true` — produtos inativos eram acessíveis diretamente pelo slug. Corrigido tanto na query principal quanto no `generateMetadata`.
+  3. `admin/produtos/actions.ts` não chamava `revalidatePath("/")` — alterações em produtos não atualizavam a homepage. Corrigido.
+  4. `admin/categorias/actions.ts` não chamava `revalidatePath("/")` — alterações em categorias não atualizavam a homepage. Corrigido.
+  5. Busca pública filtrava apenas por `name` — agora inclui `brand` e `description` via `.or()` do Supabase.
+- **Migration criada:** `009_categories_image_barcode_internal_code.sql` — adiciona `image_url` em `categories` e `barcode`/`internal_code` em `products` (idempotente, `IF NOT EXISTS`). **Aplicar no Supabase SQL Editor.**
+- **Verificações executadas:** `tsc --noEmit` OK, `npm run build` OK (18 páginas, exit 0).
+- **Arquivos modificados:** `src/app/busca/page.tsx`, `src/app/produto/[slug]/page.tsx`, `src/app/admin/produtos/actions.ts`, `src/app/admin/categorias/actions.ts`.
+- **Arquivos criados:** `supabase/migrations/009_categories_image_barcode_internal_code.sql`.
 
 ### 2026-11-05 — Drawer compacto + expandir subcategorias + header centralizado (commit 7b16b52)
 
@@ -489,7 +503,7 @@ _(nenhuma tarefa em andamento no momento)_
 
 ## 5. Pendências e problemas conhecidos
 
-- **Migrations não aplicadas:** Migrations `001` a `007` criadas mas NÃO aplicadas ao projeto Supabase. Aplicar no Supabase SQL Editor em ordem (001 → 007). Migration 007 necessária para `vitrine_header` e `content_type` nas vitrines.
+- **Migrations não aplicadas:** Migrations `001` a `009` criadas mas NÃO aplicadas ao projeto Supabase. Aplicar no Supabase SQL Editor em ordem (001 → 009). Migration 009 adiciona `image_url` em categories e `barcode`/`internal_code` em products (idempotente).
 - **WhatsApp não configurado:** Após aplicar as migrations, acessar `/admin/configuracoes` e preencher o número do WhatsApp (formato: 5591999999999).
 
 ---
