@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { ProductCard } from "@/components/ui/ProductCard";
@@ -56,7 +57,7 @@ export default async function HomePage() {
   const settings = await getStoreSettings();
   const whatsappUrl = buildWhatsAppUrl(settings.whatsapp_number);
 
-  let dbCategories: { name: string; slug: string }[] = [];
+  let dbCategories: { name: string; slug: string; image_url?: string | null }[] = [];
   const vitrineSections: VitrineSection[] = [];
 
   try {
@@ -65,7 +66,8 @@ export default async function HomePage() {
     const [categoriesResult, vitrinesResult] = await Promise.all([
       supabase
         .from("categories")
-        .select("name, slug")
+        .select("name, slug, image_url")
+        .eq("is_active", true)
         .order("position", { ascending: true }),
       supabase
         .from("vitrines")
@@ -75,7 +77,7 @@ export default async function HomePage() {
     ]);
 
     if (categoriesResult.data && categoriesResult.data.length > 0) {
-      dbCategories = categoriesResult.data as { name: string; slug: string }[];
+      dbCategories = categoriesResult.data as { name: string; slug: string; image_url?: string | null }[];
     }
 
     if (vitrinesResult.data && vitrinesResult.data.length > 0) {
@@ -129,8 +131,8 @@ export default async function HomePage() {
   }
 
   const displayCategories = dbCategories.length > 0
-    ? dbCategories.map((c) => ({ name: c.name, slug: c.slug, icon: "📦" }))
-    : STATIC_CATEGORIES;
+    ? dbCategories.map((c) => ({ name: c.name, slug: c.slug, icon: "📦", imageUrl: c.image_url ?? undefined }))
+    : STATIC_CATEGORIES.map((c) => ({ ...c, imageUrl: undefined }));
 
   return (
     <>
@@ -227,9 +229,22 @@ export default async function HomePage() {
                   href={`/categoria/${cat.slug}`}
                   className="group flex flex-col items-center gap-3 rounded-lg border border-brand-gray-mid bg-brand-gray-dark p-4 text-center transition-all hover:border-brand-yellow hover:bg-brand-gray-mid"
                 >
-                  <span className="text-3xl transition-transform group-hover:scale-110" aria-hidden="true">
-                    {cat.icon}
-                  </span>
+                  {cat.imageUrl ? (
+                    <div className="relative h-14 w-14 overflow-hidden rounded-md bg-brand-black">
+                      <Image
+                        src={cat.imageUrl}
+                        alt={cat.name}
+                        fill
+                        className="object-contain transition-transform duration-300 group-hover:scale-110"
+                        unoptimized
+                        sizes="56px"
+                      />
+                    </div>
+                  ) : (
+                    <span className="text-3xl transition-transform group-hover:scale-110" aria-hidden="true">
+                      {cat.icon}
+                    </span>
+                  )}
                   <span className="text-sm font-medium text-gray-300 group-hover:text-white">
                     {cat.name}
                   </span>
