@@ -12,7 +12,7 @@ export default async function AdminProdutosPage() {
     const { data: productsRaw } = await supabase
       .from("products")
       .select(
-        "id, name, description, brand, sku, price, stock, category_id, subcategory_id, is_active, product_images(url, is_primary)"
+        "id, name, description, brand, sku, price, stock, category_id, subcategory_id, is_active, product_type, product_images(url, is_primary)"
       )
       .order("created_at", { ascending: false });
 
@@ -52,6 +52,7 @@ export default async function AdminProdutosPage() {
       category_id: string | null;
       subcategory_id: string | null;
       is_active: boolean;
+      product_type: string | null;
       product_images: ImageRow[];
     };
 
@@ -78,6 +79,7 @@ export default async function AdminProdutosPage() {
         category_id: p.category_id,
         subcategory_id: p.subcategory_id,
         is_active: p.is_active,
+        product_type: (p.product_type === "service" ? "service" : "product") as "product" | "service",
         primary_image_url: primaryImg,
         category_name: catEntry?.name ?? null,
         subcategory_name: subcategoryName,

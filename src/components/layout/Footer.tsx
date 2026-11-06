@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { getStoreSettings, buildWhatsAppUrl } from "@/lib/store-settings";
 import { isStoreOpen } from "@/lib/business-hours";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function Footer() {
   const settings = await getStoreSettings();
@@ -9,10 +10,36 @@ export default async function Footer() {
   const storeOpen = isStoreOpen(settings.business_hours_schedule);
   const currentYear = new Date().getFullYear();
 
+  let footerCategories: { name: string; slug: string }[] = [];
+  let footerServices: { name: string; slug: string }[] = [];
+
+  try {
+    const supabase = await createClient();
+    const [catResult, svcResult] = await Promise.all([
+      supabase
+        .from("categories")
+        .select("name, slug")
+        .eq("is_active", true)
+        .order("position", { ascending: true })
+        .limit(6),
+      supabase
+        .from("products")
+        .select("name, slug")
+        .eq("product_type", "service")
+        .eq("is_active", true)
+        .order("name", { ascending: true })
+        .limit(6),
+    ]);
+    if (catResult.data) footerCategories = catResult.data as { name: string; slug: string }[];
+    if (svcResult.data) footerServices = svcResult.data as { name: string; slug: string }[];
+  } catch {
+    // banco indisponível — seções ficam vazias
+  }
+
   return (
     <footer className="border-t border-brand-gray-mid bg-brand-gray-dark">
       <div className="mx-auto max-w-content px-4 py-12 lg:px-8">
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1fr_auto_auto_auto]">
           <div className="lg:col-span-1">
             <Link href="/" className="mb-4 flex items-center gap-3">
               <Image
@@ -32,53 +59,45 @@ export default async function Footer() {
             </p>
           </div>
 
-          <div>
-            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-brand-yellow">
-              Produtos
-            </h3>
-            <ul className="space-y-2">
-              {[
-                "Computadores",
-                "Notebooks",
-                "Periféricos",
-                "Impressoras",
-                "Componentes",
-              ].map((item) => (
-                <li key={item}>
-                  <Link
-                    href="/categoria"
-                    className="text-sm text-gray-400 transition-colors hover:text-white"
-                  >
-                    {item}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {footerCategories.length > 0 && (
+            <div>
+              <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-brand-yellow">
+                Produtos
+              </h3>
+              <ul className="space-y-2">
+                {footerCategories.map((cat) => (
+                  <li key={cat.slug}>
+                    <Link
+                      href={`/categoria/${cat.slug}`}
+                      className="text-sm text-gray-400 transition-colors hover:text-white"
+                    >
+                      {cat.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
-          <div>
-            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-brand-yellow">
-              Serviços
-            </h3>
-            <ul className="space-y-2">
-              {[
-                "Manutenção de Computadores",
-                "Manutenção de Impressoras",
-                "Montagem de Computadores",
-                "Diagnóstico",
-                "Instalação e Configuração",
-              ].map((item) => (
-                <li key={item}>
-                  <Link
-                    href="/servicos"
-                    className="text-sm text-gray-400 transition-colors hover:text-white"
-                  >
-                    {item}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {footerServices.length > 0 && (
+            <div>
+              <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-brand-yellow">
+                Serviços
+              </h3>
+              <ul className="space-y-2">
+                {footerServices.map((svc) => (
+                  <li key={svc.slug}>
+                    <Link
+                      href={`/produto/${svc.slug}`}
+                      className="text-sm text-gray-400 transition-colors hover:text-white"
+                    >
+                      {svc.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <div>
             <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-brand-yellow">

@@ -24,6 +24,7 @@ export interface ProductData {
   category_id: string | null;
   subcategory_id: string | null;
   is_active: boolean;
+  product_type: "product" | "service";
   primary_image_url: string | null;
   category_name: string | null;
   subcategory_name: string | null;
@@ -82,6 +83,7 @@ export function ProdutosClient({ products, categories }: Props) {
   const [formCategoryId, setFormCategoryId] = useState("");
   const [formSubcategoryId, setFormSubcategoryId] = useState("");
   const [isActive, setIsActive] = useState(true);
+  const [formProductType, setFormProductType] = useState<"product" | "service">("product");
   const [imageUrl, setImageUrl] = useState("");
   const [uploadState, setUploadState] = useState<"idle" | "uploading" | "error">("idle");
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -93,6 +95,7 @@ export function ProdutosClient({ products, categories }: Props) {
     setFormCategoryId("");
     setFormSubcategoryId("");
     setIsActive(true);
+    setFormProductType("product");
     setFormError(null);
     setImageUrl("");
     setUploadState("idle");
@@ -104,6 +107,7 @@ export function ProdutosClient({ products, categories }: Props) {
     setFormCategoryId(product.category_id ?? "");
     setFormSubcategoryId(product.subcategory_id ?? "");
     setIsActive(product.is_active);
+    setFormProductType(product.product_type ?? "product");
     setFormError(null);
     setImageUrl(product.primary_image_url ?? "");
     setUploadState("idle");
@@ -277,6 +281,11 @@ export function ProdutosClient({ products, categories }: Props) {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-white text-sm font-medium truncate">{product.name}</span>
+                    {product.product_type === "service" && (
+                      <span className="text-[10px] font-semibold bg-blue-900/30 text-blue-400 border border-blue-800/40 px-1.5 py-0.5 rounded-full">
+                        Serviço
+                      </span>
+                    )}
                     {product.sku && (
                       <span className="text-[10px] font-mono bg-[#2a2a2a] text-[#9ca3af] px-1.5 py-0.5 rounded">
                         {product.sku}
@@ -381,6 +390,42 @@ export function ProdutosClient({ products, categories }: Props) {
                   {formError}
                 </div>
               )}
+
+              {/* Tipo: Produto / Serviço */}
+              <div>
+                <span className={labelCls}>Tipo</span>
+                <input type="hidden" name="product_type" value={formProductType} />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setFormProductType("product")}
+                    className={`flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+                      formProductType === "product"
+                        ? "border-[#ffd600] bg-[#ffd600]/10 text-[#ffd600]"
+                        : "border-[#2a2a2a] bg-[#0a0a0a] text-[#9ca3af] hover:border-[#3a3a3a]"
+                    }`}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/>
+                    </svg>
+                    Produto
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormProductType("service")}
+                    className={`flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+                      formProductType === "service"
+                        ? "border-blue-500 bg-blue-900/20 text-blue-400"
+                        : "border-[#2a2a2a] bg-[#0a0a0a] text-[#9ca3af] hover:border-[#3a3a3a]"
+                    }`}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>
+                    </svg>
+                    Serviço
+                  </button>
+                </div>
+              </div>
 
               {/* Nome, Marca, SKU */}
               <div className="grid gap-4 sm:grid-cols-2">
