@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { CartProvider } from "@/contexts/CartContext";
+import { InstallPrompt } from "@/components/ui/InstallPrompt";
 import "./globals.css";
 
 const inter = Inter({
@@ -8,6 +9,12 @@ const inter = Inter({
   variable: "--font-inter",
   display: "swap",
 });
+
+export const viewport: Viewport = {
+  themeColor: "#ffd600",
+  width: "device-width",
+  initialScale: 1,
+};
 
 export const metadata: Metadata = {
   title: {
@@ -24,6 +31,12 @@ export const metadata: Metadata = {
     "manutenção",
     "norte tecnologia",
   ],
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    title: "Norte Tecnologia",
+    statusBarStyle: "black-translucent",
+  },
   openGraph: {
     title: "Norte Tecnologia — Informática e Serviços",
     description:
@@ -46,6 +59,7 @@ export default function RootLayout({
     <html lang="pt-BR" className={inter.variable}>
       <body>
         <CartProvider>{children}</CartProvider>
+        <InstallPrompt />
       </body>
     </html>
   );
