@@ -8,23 +8,60 @@
 
 ## 1. Estado atual do projeto
 
-- **Estágio:** Admin completo + Páginas públicas completas + Carrinho + Checkout + Formas de pagamento configuráveis + Menu mobile funcional + Header redesenhado + Upload de imagens via Cloudinary (produtos e categorias) + Drawer de categorias + Sistema de promoções + Busca pública + Cabeçalhos de segurança HTTP + Filtros is_active em todas as páginas públicas + **PWA instalável (manifest, service worker, banner de instalação)**.
-- **Última atividade:** 2026-11-06 — PWA: `manifest.json`, `sw.js`, `InstallPrompt` (3 opções de instalação com localStorage + TTL 7 dias), metadados PWA no layout.
-- **Situação geral:** Deploy funcional na Vercel. Build 100% limpo (zero erros tsc, zero erros build).
-- **Próxima etapa:** Monitorar desempenho em produção. Implementar sistema de eventos/analytics quando necessário.
+- **Estágio:** Admin completo + Páginas públicas completas + Carrinho + Checkout + Formas de pagamento configuráveis + Menu mobile funcional + Header redesenhado + Upload de imagens via Cloudinary (produtos, categorias e promoções) com timeout 30s + Drawer de categorias + Sistema de promoções com carrossel full-width + Banner de promoções na homepage (via createAdminClient) + Busca pública + Cabeçalhos de segurança HTTP + Filtros is_active em todas as páginas públicas + PWA instalável + **Fuso horário corrigido para UTC-4 (Rorainópolis)**.
+- **Última atividade:** 2026-11-07 — Cloudinary upload: timeout de 30s + AbortController nos três uploadAction.ts. Upload de imagens funcional para produtos, categorias e promoções.
+- **Situação geral:** Deploy funcional na Vercel. Build 100% limpo (zero erros tsc, zero warnings lint).
+- **Próxima etapa:** Monitorar desempenho em produção. Implementar sistema de eventos/analytics quando necessário. Verificar se migration `010_promotions_rls.sql` está aplicada no Supabase de produção.
 
 ---
 
 ## 2. Última atualização
 
-- **Data:** 2026-11-06
-- **Atividade:** PWA — manifest, service worker e banner de instalação.
-- **Resultado:** tsc limpo, build OK (18 páginas dinâmicas, exit 0).
-- **Situação:** Pronto para merge e deploy.
+- **Data:** 2026-11-07
+- **Atividade:** Cloudinary upload — timeout 30s + AbortController, SHA-1, suporte a CLOUDNARY_URL. PromoBanner homepage. Fuso horário UTC-4 (Rorainópolis).
+- **Resultado:** tsc sem erros, lint sem warnings.
+- **Situação:** Tudo em main. Upload funcional nos três módulos admin.
 
 ---
 
 ## 3. Implementações concluídas
+
+### 2026-11-07 — Cloudinary upload: timeout 30s + AbortController
+
+- **Objetivo:** Resolver travamento da UI ao tentar fazer upload de imagem quando o Cloudinary não respondia (credenciais inválidas, rede lenta ou bloqueada).
+- **Problema:** O `fetch` para `api.cloudinary.com` não tinha `AbortController` nem timeout. Qualquer falha de rede silenciosa deixava o botão em "Enviando…" para sempre sem retornar erro ao usuário.
+- **Implementação:**
+  - `AbortController` com `setTimeout` de 30s nos três arquivos `uploadAction.ts`.
+  - `AbortError` capturado separadamente com mensagem amigável em português.
+  - `clearTimeout` garantido tanto no sucesso quanto no erro de rede.
+- **Arquivos modificados:** `src/app/admin/produtos/uploadAction.ts`, `src/app/admin/categorias/uploadAction.ts`, `src/app/admin/promocoes/uploadAction.ts`.
+- **Verificações executadas:** tsc sem erros, lint sem warnings.
+
+### 2026-11-07 — Cloudinary upload: SHA-1 + helper getCloudinaryCreds + suporte a CLOUDNARY_URL
+
+- **Objetivo:** Corrigir assinatura de upload inválida e suportar formato de URL `cloudinary://`.
+- **Problemas corrigidos:**
+  1. Código usava SHA-256 (`signature_algorithm: "sha256"`), que exige ativação manual nas configurações de segurança do Cloudinary. O padrão universal é SHA-1.
+  2. Env var com typo `CLOUDNARY_URL` (falta o 'I') configurada na Vercel — o código não reconhecia.
+- **Implementação:**
+  - Todos os três `uploadAction.ts` passaram a usar `crypto.createHash("sha1")` sem parâmetro `signature_algorithm`.
+  - Criado `src/lib/cloudinary.ts` — helper `getCloudinaryCreds()` que suporta vars separadas (`CLOUDINARY_CLOUD_NAME` + `CLOUDINARY_API_KEY` + `CLOUDINARY_API_SECRET`) OU URL no formato `cloudinary://KEY:SECRET@CLOUD_NAME`, incluindo o typo `CLOUDNARY_URL`.
+- **Arquivos criados:** `src/lib/cloudinary.ts`.
+- **Arquivos modificados:** `src/app/admin/produtos/uploadAction.ts`, `src/app/admin/categorias/uploadAction.ts`, `src/app/admin/promocoes/uploadAction.ts`.
+
+### 2026-11-07 — PromoBanner homepage + fuso horário UTC-4 (Rorainópolis)
+
+- **Objetivo:** Exibir banner de promoções na homepage e corrigir fuso horário do horário de funcionamento.
+- **Problemas corrigidos:**
+  1. Tabela `promotions` sem política RLS para leitura anon → cliente retornava array vazio na homepage.
+  2. `src/lib/business-hours.ts` usava UTC-3 (Belém/Pará) — Norte Tecnologia é de Rorainópolis, Roraima (UTC-4, America/Manaus).
+- **Implementação:**
+  - `src/app/page.tsx`: query de promoções alterada para usar `createAdminClient()` (service_role, bypassa RLS) em vez do cliente anon.
+  - `src/lib/business-hours.ts`: offset `- 4 * 60 * 60 * 1000` nos dois métodos `isStoreOpen` e `getTodayHours`.
+  - Migration `supabase/migrations/010_promotions_rls.sql` criada com políticas RLS de leitura pública para promoções ativas. **Aplicar no Supabase SQL Editor (solução de longo prazo).**
+- **Arquivos modificados:** `src/app/page.tsx`, `src/lib/business-hours.ts`.
+- **Arquivos criados:** `supabase/migrations/010_promotions_rls.sql`.
+- **Pendência:** Verificar se migration `010_promotions_rls.sql` foi aplicada no Supabase de produção.
 
 ### 2026-11-06 — PWA: manifest, service worker e banner de instalação
 
