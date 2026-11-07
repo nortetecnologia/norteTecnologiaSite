@@ -235,6 +235,33 @@ export function ConfiguracoesForm({ initialData }: Props) {
         </p>
       </section>
 
+      {/* Localização */}
+      <section className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-6">
+        <h2 className="text-white font-semibold mb-5 flex items-center gap-2">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffd600" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+            <circle cx="12" cy="10" r="3" />
+          </svg>
+          Localização no Mapa
+        </h2>
+        <div>
+          <label htmlFor="location_url" className="block text-sm font-medium text-[#d1d5db] mb-1.5">
+            URL de incorporação do Google Maps
+          </label>
+          <input
+            id="location_url"
+            name="location_url"
+            type="url"
+            defaultValue={initialData.location_url ?? ""}
+            placeholder="https://www.google.com/maps/embed?pb=..."
+            className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg px-4 py-2.5 text-white text-sm placeholder-[#4b5563] focus:outline-none focus:border-[#ffd600] focus:ring-1 focus:ring-[#ffd600] transition-colors"
+          />
+          <p className="mt-1.5 text-xs text-[#6b7280]">
+            No Google Maps, clique em <strong className="text-[#9ca3af]">Compartilhar → Incorporar um mapa</strong> e cole aqui a URL do atributo <code className="text-[#ffd600]">src</code> do iframe.
+          </p>
+        </div>
+      </section>
+
       {/* Salvar */}
       <div className="flex justify-end">
         <button

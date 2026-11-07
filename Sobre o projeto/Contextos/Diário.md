@@ -8,23 +8,37 @@
 
 ## 1. Estado atual do projeto
 
-- **Estágio:** Admin completo + Páginas públicas completas + Carrinho + Checkout + Formas de pagamento configuráveis + Menu mobile funcional + Header redesenhado + Upload de imagens via Cloudinary (produtos, categorias e promoções) com timeout 30s + Drawer de categorias + Sistema de promoções com carrossel full-width + Banner de promoções na homepage (via createAdminClient) + Busca pública + Cabeçalhos de segurança HTTP + Filtros is_active em todas as páginas públicas + PWA instalável + **Fuso horário corrigido para UTC-4 (Rorainópolis)**.
-- **Última atividade:** 2026-11-07 — Cloudinary upload: timeout de 30s + AbortController nos três uploadAction.ts. Upload de imagens funcional para produtos, categorias e promoções.
-- **Situação geral:** Deploy funcional na Vercel. Build 100% limpo (zero erros tsc, zero warnings lint).
-- **Próxima etapa:** Monitorar desempenho em produção. Implementar sistema de eventos/analytics quando necessário. Verificar se migration `010_promotions_rls.sql` está aplicada no Supabase de produção.
+- **Estágio:** Admin completo + Páginas públicas completas + Carrinho + Checkout + Formas de pagamento configuráveis + Menu mobile funcional + Header redesenhado + Upload de imagens via Cloudinary + Drawer de categorias + Sistema de promoções + PromoBanner homepage + Busca pública + Cabeçalhos de segurança HTTP + Filtros is_active + PWA instalável + Fuso UTC-4 (Rorainópolis) + **Mapa configurável** + **Feedback LGPD** + **Preço faixa para serviços** + **Limpeza de imagem Cloudinary ao excluir** + **bodySizeLimit 10mb**.
+- **Última atividade:** 2026-11-07 — Sprint multi-tarefa: toggle bug, Maps embed, Feedback LGPD, price_max serviços.
+- **Situação geral:** Deploy funcional na Vercel. Build 100% limpo (zero erros tsc). **Aplicar migrations 011 e 012 no Supabase SQL Editor.**
+- **Próxima etapa:** Aplicar migrations 011 e 012 no Supabase. Configurar URL do Google Maps em Configurações do admin.
 
 ---
 
 ## 2. Última atualização
 
 - **Data:** 2026-11-07
-- **Atividade:** Cloudinary upload — timeout 30s + AbortController, SHA-1, suporte a CLOUDNARY_URL. PromoBanner homepage. Fuso horário UTC-4 (Rorainópolis).
-- **Resultado:** tsc sem erros, lint sem warnings.
-- **Situação:** Tudo em main. Upload funcional nos três módulos admin.
+- **Atividade:** Sprint multi-tarefa — toggle bug fix, Maps embed configurável, sistema de Feedback LGPD, preço faixa para serviços (price_max).
+- **Resultado:** tsc sem erros.
+- **Situação:** Branch `claude/norte-tecnologia-setup-f7c541`. **Aplicar migrations 011 e 012 antes de usar novas funcionalidades em produção.**
 
 ---
 
 ## 3. Implementações concluídas
+
+### 2026-11-07 — Toggle bug fix + Maps embed + Feedback LGPD + preço faixa serviços
+
+- **Objetivo:** 4 melhorias solicitadas via screenshot/texto.
+- **Implementação:**
+  1. **Toggle bug (BusinessHoursEditor):** botão tinha `position: relative` sem `overflow-hidden` — o círculo `absolute` translacionado criava contexto de stacking e sobrepunha o texto do dia. Fix: `overflow-hidden` no `<button>` + texto de fuso corrigido para "Rorainópolis/RR (UTC-4)".
+  2. **Maps embed:** `location_url TEXT` adicionado a `store_settings` (migration 011). `StoreSettingsData` atualizado. `ConfiguracoesForm.tsx` ganhou seção "Localização" com input URL. `actions.ts` salva o campo. `page.tsx` renderiza `<iframe>` do Google Maps quando configurado (admin cola a URL de incorporação).
+  3. **Feedback LGPD:** migration 012 cria tabela `feedback` com RLS (anon pode inserir apenas com `consent_given = true`). `FeedbackForm.tsx` (client, `useActionState`) com campos nome/email (opcionais) + mensagem (obrigatória) + checkbox LGPD. Server Action `submitFeedback.ts`. Seção acima do footer em `page.tsx`. Admin em `/admin/feedback` com `FeedbackAdminClient.tsx` e delete action. Aba "Feedback" adicionada ao `AdminSidebar.tsx`.
+  4. **Preço faixa serviços:** `price_max NUMERIC(10,2)` em `products` (migration 011). `ProductData` interface atualizada. `ProdutosClient.tsx` exibe campos "Preço mínimo" e "Preço máximo" quando `product_type === "service"`. `actions.ts` salva e valida `price_max ≥ price`. Página pública `/produto/[slug]` exibe "R$ X a R$ Y" quando há faixa.
+- **Migrações criadas:** `supabase/migrations/011_location_price_range.sql`, `supabase/migrations/012_feedback.sql`. **Aplicar no Supabase SQL Editor.**
+- **Arquivos criados:** `src/app/actions/submitFeedback.ts`, `src/components/ui/FeedbackForm.tsx`, `src/app/admin/feedback/actions.ts`, `src/app/admin/feedback/page.tsx`, `src/app/admin/feedback/FeedbackAdminClient.tsx`.
+- **Arquivos modificados:** `BusinessHoursEditor.tsx`, `store-settings.ts`, `configuracoes/actions.ts`, `ConfiguracoesForm.tsx`, `produtos/actions.ts`, `produtos/page.tsx`, `ProdutosClient.tsx`, `produto/[slug]/page.tsx`, `AdminSidebar.tsx`, `src/app/page.tsx`.
+- **Verificações:** `tsc --noEmit` sem erros.
+- **Pendência:** Aplicar migrations 011 e 012.
 
 ### 2026-11-07 — Cloudinary upload: timeout 30s + AbortController
 

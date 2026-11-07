@@ -7,6 +7,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { ProductCard } from "@/components/ui/ProductCard";
 import { PromoBanner } from "@/components/ui/PromoBanner";
+import { FeedbackForm } from "@/components/ui/FeedbackForm";
 import { getStoreSettings, buildWhatsAppUrl } from "@/lib/store-settings";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -321,6 +322,41 @@ export default async function HomePage() {
               </svg>
               Falar com a Norte Tecnologia
             </a>
+          </div>
+        </section>
+        {/* Localização e Feedback */}
+        <section className="border-t border-brand-gray-mid px-4 py-10 lg:px-8">
+          <div className="mx-auto max-w-content">
+            <div className={`grid gap-10 ${settings.location_url ? "lg:grid-cols-2" : ""}`}>
+
+              {/* Google Maps embed — só renderiza se location_url estiver configurado */}
+              {settings.location_url && (
+                <div>
+                  <h2 className="mb-4 text-xl font-bold text-white lg:text-2xl">Nossa Localização</h2>
+                  <div className="overflow-hidden rounded-xl border border-brand-gray-mid">
+                    <iframe
+                      src={settings.location_url}
+                      width="100%"
+                      height="300"
+                      style={{ border: 0 }}
+                      allowFullScreen
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      title="Localização da Norte Tecnologia no Google Maps"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Feedback */}
+              <div>
+                <h2 className="mb-1 text-xl font-bold text-white lg:text-2xl">Envie seu Feedback</h2>
+                <p className="mb-5 text-sm text-gray-400">
+                  Sugestões, elogios ou dúvidas? Adoramos ouvir nossos clientes.
+                </p>
+                <FeedbackForm />
+              </div>
+            </div>
           </div>
         </section>
       </main>

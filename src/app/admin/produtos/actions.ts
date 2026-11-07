@@ -63,6 +63,12 @@ export async function createProduct(
     const barcode = productType === "product" ? ((formData.get("barcode") as string)?.trim() || null) : null;
     const internalCode = (formData.get("internal_code") as string)?.trim() || null;
 
+    const priceMaxRaw = (formData.get("price_max") as string)?.replace(",", ".");
+    const priceMax = productType === "service" && priceMaxRaw ? parseFloat(priceMaxRaw) : null;
+    if (priceMax !== null && (isNaN(priceMax) || priceMax < price)) {
+      return { error: "O preço máximo deve ser maior ou igual ao preço mínimo." };
+    }
+
     // Gerar slug único
     const baseSlug = toSlug(name);
     let slug = baseSlug;
@@ -86,6 +92,7 @@ export async function createProduct(
         barcode,
         internal_code: internalCode,
         price,
+        price_max: priceMax,
         stock: stockRaw,
         category_id: categoryId || null,
         subcategory_id: subcategoryId || null,
@@ -151,6 +158,12 @@ export async function updateProduct(
     const barcode = productType === "product" ? ((formData.get("barcode") as string)?.trim() || null) : null;
     const internalCode = (formData.get("internal_code") as string)?.trim() || null;
 
+    const priceMaxRawU = (formData.get("price_max") as string)?.replace(",", ".");
+    const priceMaxU = productType === "service" && priceMaxRawU ? parseFloat(priceMaxRawU) : null;
+    if (priceMaxU !== null && (isNaN(priceMaxU) || priceMaxU < price)) {
+      return { error: "O preço máximo deve ser maior ou igual ao preço mínimo." };
+    }
+
     const { error: updateError } = await supabase
       .from("products")
       .update({
@@ -161,6 +174,7 @@ export async function updateProduct(
         barcode,
         internal_code: internalCode,
         price,
+        price_max: priceMaxU,
         stock: stockRaw,
         category_id: categoryId || null,
         subcategory_id: subcategoryId || null,

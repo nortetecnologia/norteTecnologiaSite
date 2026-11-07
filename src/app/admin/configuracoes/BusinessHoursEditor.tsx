@@ -56,7 +56,7 @@ export function BusinessHoursEditor({ initialSchedule }: Props) {
 
       <div className="mb-4 flex items-center justify-between gap-4">
         <p className="text-xs text-[#6b7280]">
-          Configure horários para cada dia da semana. Fuso horário: Belém/PA (UTC-3).
+          Configure horários para cada dia da semana. Fuso horário: Roraïnópolis/RR (UTC-4).
         </p>
         <button
           type="button"
@@ -86,7 +86,7 @@ export function BusinessHoursEditor({ initialSchedule }: Props) {
                   role="switch"
                   aria-checked={d.open}
                   onClick={() => updateDay(day, { open: !d.open })}
-                  className={`relative w-10 h-[22px] rounded-full transition-colors shrink-0 ${
+                  className={`relative w-10 h-[22px] rounded-full transition-colors shrink-0 overflow-hidden ${
                     d.open ? "bg-[#ffd600]" : "bg-[#2a2a2a]"
                   }`}
                   aria-label={`${DAY_LABELS[day]}: ${d.open ? "aberta" : "fechada"}`}
