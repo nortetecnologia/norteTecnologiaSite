@@ -46,6 +46,7 @@ export async function createPromotion(formData: FormData): Promise<PromoActionRe
       return { error: "O desconto deve ser entre 1 e 99%." };
     }
     const coverImageUrl = (formData.get("cover_image_url") as string)?.trim() || null;
+    const showBannerText = formData.get("show_banner_text") !== "false";
 
     // Check active promotions limit
     const { count: activeCount } = await supabase
@@ -77,6 +78,7 @@ export async function createPromotion(formData: FormData): Promise<PromoActionRe
         discount_percent: discountPercent,
         cover_image_url: coverImageUrl,
         is_active: true,
+        show_banner_text: showBannerText,
         position: (activeCount ?? 0),
         updated_at: new Date().toISOString(),
       })
@@ -119,6 +121,7 @@ export async function updatePromotion(id: string, formData: FormData): Promise<P
     }
     const coverImageUrl = (formData.get("cover_image_url") as string)?.trim() || null;
     const isActive = formData.get("is_active") === "true";
+    const showBannerText = formData.get("show_banner_text") !== "false";
 
     // If activating: check limit
     if (isActive) {
@@ -141,6 +144,7 @@ export async function updatePromotion(id: string, formData: FormData): Promise<P
         discount_percent: discountPercent,
         cover_image_url: coverImageUrl,
         is_active: isActive,
+        show_banner_text: showBannerText,
         updated_at: new Date().toISOString(),
       })
       .eq("id", id);

@@ -29,6 +29,7 @@ interface PromoRow {
   subtitle: string | null;
   discount_percent: number | null;
   cover_image_url: string | null;
+  show_banner_text: boolean | null;
 }
 
 interface ProductRow {
@@ -71,7 +72,7 @@ export default async function HomePage() {
         .order("position", { ascending: true }),
       adminClient
         .from("promotions")
-        .select("id, title, slug, subtitle, discount_percent, cover_image_url")
+        .select("id, title, slug, subtitle, discount_percent, cover_image_url, show_banner_text")
         .eq("is_active", true)
         .order("position", { ascending: true })
         .limit(4),

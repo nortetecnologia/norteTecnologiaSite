@@ -16,7 +16,7 @@ export default async function PromocoesPage() {
         .from("promotions")
         .select(`
           id, title, slug, subtitle, discount_percent,
-          cover_image_url, is_active, position,
+          cover_image_url, is_active, show_banner_text, position,
           promotion_products(id)
         `)
         .order("position", { ascending: true })
@@ -38,6 +38,7 @@ export default async function PromocoesPage() {
         discount_percent: p.discount_percent ?? null,
         cover_image_url: p.cover_image_url ?? null,
         is_active: p.is_active,
+        show_banner_text: p.show_banner_text ?? true,
         position: p.position,
         product_count: p.promotion_products?.length ?? 0,
       }));
