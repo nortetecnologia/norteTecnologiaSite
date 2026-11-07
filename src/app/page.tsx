@@ -327,18 +327,18 @@ export default async function HomePage() {
         {/* Localização e Feedback */}
         <section className="border-t border-brand-gray-mid px-4 py-10 lg:px-8">
           <div className="mx-auto max-w-content">
-            <div className={`grid gap-10 ${settings.location_url?.includes("/maps/embed") ? "lg:grid-cols-2" : ""}`}>
+            <div className={`grid gap-10 ${settings.location_url?.includes("/maps/embed") ? "lg:grid-cols-2 lg:items-stretch" : ""}`}>
 
               {/* Google Maps embed — só renderiza com URL de incorporação válida */}
               {settings.location_url && settings.location_url.includes("/maps/embed") && (
-                <div>
+                <div className="flex flex-col">
                   <h2 className="mb-4 text-xl font-bold text-white lg:text-2xl">Nossa Localização</h2>
-                  <div className="overflow-hidden rounded-xl border border-brand-gray-mid">
+                  <div className="flex-1 overflow-hidden rounded-xl border border-brand-gray-mid min-h-[400px]">
                     <iframe
                       src={settings.location_url}
                       width="100%"
-                      height="480"
-                      style={{ border: 0 }}
+                      height="100%"
+                      style={{ border: 0, display: "block" }}
                       allowFullScreen
                       loading="lazy"
                       referrerPolicy="no-referrer-when-downgrade"
