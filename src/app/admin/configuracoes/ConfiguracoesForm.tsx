@@ -20,6 +20,7 @@ export function ConfiguracoesForm({ initialData }: Props) {
     initialData.payment_methods?.length ? initialData.payment_methods : DEFAULT_PAYMENT_METHODS
   );
   const [newMethod, setNewMethod] = useState("");
+  const [locationUrl, setLocationUrl] = useState(initialData.location_url ?? "");
 
   function addPaymentMethod() {
     const trimmed = newMethod.trim();
@@ -252,13 +253,39 @@ export function ConfiguracoesForm({ initialData }: Props) {
             id="location_url"
             name="location_url"
             type="url"
-            defaultValue={initialData.location_url ?? ""}
+            value={locationUrl}
+            onChange={(e) => setLocationUrl(e.target.value)}
             placeholder="https://www.google.com/maps/embed?pb=..."
-            className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg px-4 py-2.5 text-white text-sm placeholder-[#4b5563] focus:outline-none focus:border-[#ffd600] focus:ring-1 focus:ring-[#ffd600] transition-colors"
+            className={`w-full bg-[#0a0a0a] border rounded-lg px-4 py-2.5 text-white text-sm placeholder-[#4b5563] focus:outline-none focus:ring-1 transition-colors ${
+              locationUrl && !locationUrl.includes("/maps/embed")
+                ? "border-yellow-600 focus:border-yellow-500 focus:ring-yellow-500"
+                : "border-[#2a2a2a] focus:border-[#ffd600] focus:ring-[#ffd600]"
+            }`}
           />
-          <p className="mt-1.5 text-xs text-[#6b7280]">
-            No Google Maps, clique em <strong className="text-[#9ca3af]">Compartilhar → Incorporar um mapa</strong> e cole aqui a URL do atributo <code className="text-[#ffd600]">src</code> do iframe.
-          </p>
+
+          {locationUrl && !locationUrl.includes("/maps/embed") && (
+            <div className="mt-2 flex items-start gap-2 rounded-lg border border-yellow-800/50 bg-yellow-900/10 px-3 py-2.5 text-xs text-yellow-400">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-0.5" aria-hidden="true">
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+              <span>
+                Esta URL não é uma URL de incorporação. O mapa será bloqueado pelo browser.{" "}
+                <strong>Use apenas URLs do tipo <code>google.com/maps/embed?pb=…</code></strong>
+              </span>
+            </div>
+          )}
+
+          <div className="mt-2 rounded-lg border border-[#2a2a2a] bg-[#111111] px-3 py-2.5 text-xs text-[#6b7280] space-y-1">
+            <p className="font-medium text-[#9ca3af]">Como obter a URL correta:</p>
+            <ol className="list-decimal list-inside space-y-0.5">
+              <li>Abra o <strong className="text-[#9ca3af]">Google Maps</strong> e encontre sua loja</li>
+              <li>Clique em <strong className="text-[#9ca3af]">Compartilhar</strong> → aba <strong className="text-[#9ca3af]">Incorporar um mapa</strong></li>
+              <li>Clique em <strong className="text-[#9ca3af]">Copiar HTML</strong></li>
+              <li>Cole aqui apenas o valor do atributo <code className="text-[#ffd600]">src=&quot;…&quot;</code> do iframe</li>
+            </ol>
+            <p className="pt-0.5">A URL correta começa com <code className="text-[#ffd600]">https://www.google.com/maps/embed?pb=</code></p>
+          </div>
         </div>
       </section>
 

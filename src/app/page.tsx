@@ -327,10 +327,10 @@ export default async function HomePage() {
         {/* Localização e Feedback */}
         <section className="border-t border-brand-gray-mid px-4 py-10 lg:px-8">
           <div className="mx-auto max-w-content">
-            <div className={`grid gap-10 ${settings.location_url ? "lg:grid-cols-2" : ""}`}>
+            <div className={`grid gap-10 ${settings.location_url?.includes("/maps/embed") ? "lg:grid-cols-2" : ""}`}>
 
-              {/* Google Maps embed — só renderiza se location_url estiver configurado */}
-              {settings.location_url && (
+              {/* Google Maps embed — só renderiza com URL de incorporação válida */}
+              {settings.location_url && settings.location_url.includes("/maps/embed") && (
                 <div>
                   <h2 className="mb-4 text-xl font-bold text-white lg:text-2xl">Nossa Localização</h2>
                   <div className="overflow-hidden rounded-xl border border-brand-gray-mid">
