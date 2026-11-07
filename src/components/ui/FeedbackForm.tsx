@@ -3,7 +3,11 @@
 import { useActionState, useEffect, useRef } from "react";
 import { submitFeedback, type FeedbackSubmitResult } from "@/app/actions/submitFeedback";
 
-export function FeedbackForm() {
+interface FeedbackFormProps {
+  contactEmail?: string | null;
+}
+
+export function FeedbackForm({ contactEmail }: FeedbackFormProps = {}) {
   const [state, action, isPending] = useActionState<FeedbackSubmitResult | null, FormData>(
     submitFeedback,
     null
@@ -63,7 +67,32 @@ export function FeedbackForm() {
         />
       </div>
 
-      {/* LGPD consent */}
+      {/* LGPD — aviso de coleta de dados */}
+      <div className="rounded-lg border border-[#2a2a2a] bg-[#111111] px-4 py-3 text-xs text-[#9ca3af] leading-relaxed space-y-1.5">
+        <p className="font-medium text-[#d1d5db]">Aviso de coleta de dados pessoais (LGPD)</p>
+        <p>
+          Ao enviar este formulário, a <strong className="text-[#d1d5db]">Norte Tecnologia</strong> coletará
+          os dados informados (nome e e-mail, se fornecidos, e a mensagem) com a finalidade exclusiva de
+          responder ao seu contato. O tratamento tem como base legal o seu <strong className="text-[#d1d5db]">consentimento</strong> (Art.&nbsp;7,&nbsp;I&nbsp;da&nbsp;LGPD).
+        </p>
+        <p>
+          Os dados serão armazenados por até <strong className="text-[#d1d5db]">2 anos</strong> e não serão
+          compartilhados com terceiros.
+        </p>
+        <p>
+          Você tem direito a acessar, corrigir, solicitar a exclusão ou a portabilidade dos seus dados,
+          bem como revogar este consentimento a qualquer momento, sem prejuízo ao tratamento já realizado.
+          {contactEmail ? (
+            <> Para exercer seus direitos, entre em contato pelo e-mail{" "}
+              <strong className="text-[#ffd600]">{contactEmail}</strong>.
+            </>
+          ) : (
+            <> Para exercer seus direitos, entre em contato diretamente com a Norte Tecnologia.</>
+          )}
+        </p>
+      </div>
+
+      {/* Checkbox de consentimento */}
       <label className="flex items-start gap-3 cursor-pointer select-none">
         <input
           type="checkbox"
@@ -72,9 +101,7 @@ export function FeedbackForm() {
           className="mt-0.5 w-4 h-4 accent-[#ffd600] cursor-pointer shrink-0"
         />
         <span className="text-xs text-[#9ca3af] leading-relaxed">
-          Concordo que a Norte Tecnologia armazene e utilize meus dados (nome e e-mail, se fornecidos) para responder a este contato, conforme a{" "}
-          <strong className="text-[#d1d5db]">Lei Geral de Proteção de Dados (LGPD)</strong>.
-          Os dados não serão compartilhados com terceiros.
+          Li e concordo com o aviso acima e autorizo o tratamento dos meus dados pessoais conforme descrito.
         </span>
       </label>
 

@@ -354,7 +354,7 @@ export default async function HomePage() {
                 <p className="mb-5 text-sm text-gray-400">
                   Sugestões, elogios ou dúvidas? Adoramos ouvir nossos clientes.
                 </p>
-                <FeedbackForm />
+                <FeedbackForm contactEmail={settings.email} />
               </div>
             </div>
           </div>
