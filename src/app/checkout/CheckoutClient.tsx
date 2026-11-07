@@ -7,9 +7,27 @@ import { formatCurrency } from "@/lib/utils";
 
 type DeliveryMode = "retirada" | "entrega";
 
+interface AddressFields {
+  street: string;
+  number: string;
+  noNumber: boolean;
+  neighborhood: string;
+  reference: string;
+}
+
 interface CheckoutClientProps {
   whatsappNumber: string | null;
   paymentMethods: string[];
+}
+
+function buildAddressString(addr: AddressFields): string {
+  const parts: string[] = [];
+  parts.push(addr.street.trim());
+  parts.push(addr.noNumber ? "S/N" : `nº ${addr.number.trim()}`);
+  if (addr.neighborhood.trim()) parts.push(addr.neighborhood.trim());
+  parts.push("Rorainópolis — RR, CEP 69373-000");
+  if (addr.reference.trim()) parts.push(`Referência: ${addr.reference.trim()}`);
+  return parts.join(", ");
 }
 
 function buildWhatsAppMessage(params: {
@@ -17,7 +35,7 @@ function buildWhatsAppMessage(params: {
   totalPrice: number;
   paymentMethod: string;
   deliveryMode: DeliveryMode;
-  address: string;
+  address: AddressFields;
   observations: string;
 }): string {
   const { items, totalPrice, paymentMethod, deliveryMode, address, observations } = params;
@@ -40,8 +58,8 @@ function buildWhatsAppMessage(params: {
     `*Modalidade:* ${deliveryMode === "retirada" ? "Retirada na loja" : "Entrega"}`
   );
 
-  if (deliveryMode === "entrega" && address.trim()) {
-    lines.push(`*Endereço de entrega:* ${address.trim()}`);
+  if (deliveryMode === "entrega") {
+    lines.push(`*Endereço de entrega:* ${buildAddressString(address)}`);
   }
 
   if (observations.trim()) {
@@ -56,7 +74,13 @@ export function CheckoutClient({ whatsappNumber, paymentMethods }: CheckoutClien
 
   const [paymentMethod, setPaymentMethod] = useState(paymentMethods[0] ?? "Dinheiro");
   const [deliveryMode, setDeliveryMode] = useState<DeliveryMode>("retirada");
-  const [address, setAddress] = useState("");
+  const [address, setAddress] = useState<AddressFields>({
+    street: "",
+    number: "",
+    noNumber: false,
+    neighborhood: "",
+    reference: "",
+  });
   const [observations, setObservations] = useState("");
 
   const digits = (whatsappNumber ?? "").replace(/\D/g, "");
@@ -76,7 +100,11 @@ export function CheckoutClient({ whatsappNumber, paymentMethods }: CheckoutClien
   }
 
   const isDelivery = deliveryMode === "entrega";
-  const addressMissing = isDelivery && address.trim() === "";
+  const addressMissing =
+    isDelivery &&
+    (address.street.trim() === "" ||
+      address.neighborhood.trim() === "" ||
+      (!address.noNumber && address.number.trim() === ""));
 
   function handleFinish() {
     if (addressMissing) return;
@@ -163,20 +191,88 @@ export function CheckoutClient({ whatsappNumber, paymentMethods }: CheckoutClien
           </div>
 
           {isDelivery && (
-            <div className="mt-4">
-              <label htmlFor="address" className="mb-1.5 block text-sm font-medium text-gray-300">
-                Endereço de Entrega <span className="text-red-400">*</span>
-              </label>
-              <input
-                id="address"
-                type="text"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="Rua, número, bairro, cidade"
-                className="w-full rounded-md border border-brand-gray-mid bg-brand-black px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-brand-yellow focus:outline-none"
-              />
+            <div className="mt-4 space-y-3">
+              <div className="rounded-md border border-brand-yellow/20 bg-brand-yellow/5 px-3 py-2 text-xs text-gray-400">
+                Atendemos apenas em <span className="text-white font-medium">Rorainópolis — RR</span>, CEP 69373-000. Não é necessário informar o CEP.
+              </div>
+
+              {/* Rua */}
+              <div>
+                <label htmlFor="addr-street" className="mb-1.5 block text-sm font-medium text-gray-300">
+                  Rua / Logradouro <span className="text-red-400">*</span>
+                </label>
+                <input
+                  id="addr-street"
+                  type="text"
+                  value={address.street}
+                  onChange={(e) => setAddress((a) => ({ ...a, street: e.target.value }))}
+                  placeholder="Ex: Rua das Flores"
+                  className="w-full rounded-md border border-brand-gray-mid bg-brand-black px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-brand-yellow focus:outline-none"
+                />
+              </div>
+
+              {/* Número */}
+              <div>
+                <label htmlFor="addr-number" className="mb-1.5 block text-sm font-medium text-gray-300">
+                  Número {address.noNumber && <span className="text-gray-500 font-normal">(sem número)</span>}
+                  {!address.noNumber && <span className="text-red-400"> *</span>}
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    id="addr-number"
+                    type="text"
+                    value={address.number}
+                    disabled={address.noNumber}
+                    onChange={(e) => setAddress((a) => ({ ...a, number: e.target.value }))}
+                    placeholder="Ex: 123"
+                    className="w-32 rounded-md border border-brand-gray-mid bg-brand-black px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-brand-yellow focus:outline-none disabled:opacity-40"
+                  />
+                  <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-400">
+                    <input
+                      type="checkbox"
+                      checked={address.noNumber}
+                      onChange={(e) =>
+                        setAddress((a) => ({ ...a, noNumber: e.target.checked, number: "" }))
+                      }
+                      className="h-4 w-4 rounded border-brand-gray-mid accent-brand-yellow"
+                    />
+                    Sem número
+                  </label>
+                </div>
+              </div>
+
+              {/* Bairro */}
+              <div>
+                <label htmlFor="addr-neighborhood" className="mb-1.5 block text-sm font-medium text-gray-300">
+                  Bairro <span className="text-red-400">*</span>
+                </label>
+                <input
+                  id="addr-neighborhood"
+                  type="text"
+                  value={address.neighborhood}
+                  onChange={(e) => setAddress((a) => ({ ...a, neighborhood: e.target.value }))}
+                  placeholder="Ex: Centro"
+                  className="w-full rounded-md border border-brand-gray-mid bg-brand-black px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-brand-yellow focus:outline-none"
+                />
+              </div>
+
+              {/* Referência */}
+              <div>
+                <label htmlFor="addr-reference" className="mb-1.5 block text-sm font-medium text-gray-300">
+                  Ponto de Referência <span className="text-xs font-normal text-gray-500">(opcional)</span>
+                </label>
+                <input
+                  id="addr-reference"
+                  type="text"
+                  value={address.reference}
+                  onChange={(e) => setAddress((a) => ({ ...a, reference: e.target.value }))}
+                  placeholder="Ex: Próximo ao mercado X"
+                  className="w-full rounded-md border border-brand-gray-mid bg-brand-black px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-brand-yellow focus:outline-none"
+                />
+              </div>
+
               {addressMissing && (
-                <p className="mt-1 text-xs text-red-400">Informe o endereço para entrega.</p>
+                <p className="text-xs text-red-400">Preencha rua, número e bairro para continuar.</p>
               )}
             </div>
           )}

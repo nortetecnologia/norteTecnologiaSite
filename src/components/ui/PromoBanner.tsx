@@ -65,7 +65,7 @@ export function PromoBanner({ promotions }: Props) {
                 alt={promo.title}
                 width={1920}
                 height={640}
-                className="block w-full h-auto"
+                className="block w-full object-cover aspect-[2/1] sm:aspect-auto sm:object-contain"
                 unoptimized
                 priority={i === 0}
                 sizes="100vw"
