@@ -18,6 +18,7 @@ interface ProductDetail {
   slug: string;
   description: string | null;
   price: number;
+  price_max: number | null;
   stock: number;
   category: { name: string; slug: string } | null;
   product_images: { url: string; is_primary: boolean }[];
@@ -55,7 +56,7 @@ export default async function ProductPage({ params }: PageProps) {
     const { data } = await supabase
       .from("products")
       .select(
-        "id, name, slug, description, price, stock, category:categories(name, slug), product_images(url, is_primary)"
+        "id, name, slug, description, price, price_max, stock, category:categories(name, slug), product_images(url, is_primary)"
       )
       .eq("slug", slug)
       .eq("is_active", true)
@@ -158,7 +159,9 @@ export default async function ProductPage({ params }: PageProps) {
                 <h1 className="mb-4 text-2xl font-bold text-white lg:text-3xl">{product.name}</h1>
 
                 <p className="mb-6 text-3xl font-extrabold text-brand-yellow">
-                  {formatCurrency(product.price)}
+                  {product.price_max && product.price_max > product.price
+                    ? `${formatCurrency(product.price)} a ${formatCurrency(product.price_max)}`
+                    : formatCurrency(product.price)}
                 </p>
 
                 {product.description && (

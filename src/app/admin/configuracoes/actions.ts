@@ -66,6 +66,8 @@ export async function saveStoreSettings(
     return { error: "É necessário ao menos uma forma de pagamento." };
   }
 
+  const locationUrl = (formData.get("location_url") as string)?.trim() || null;
+
   const payload = {
     store_name:
       (formData.get("store_name") as string)?.trim() || "Norte Tecnologia",
@@ -76,6 +78,7 @@ export async function saveStoreSettings(
     state_abbr: (formData.get("state_abbr") as string)?.trim() || "PA",
     business_hours_schedule: businessHoursSchedule,
     payment_methods: paymentMethods,
+    location_url: locationUrl,
     updated_at: new Date().toISOString(),
   };
 

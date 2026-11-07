@@ -22,6 +22,7 @@ export interface ProductData {
   barcode: string | null;
   internal_code: string | null;
   price: number;
+  price_max: number | null;
   stock: number;
   category_id: string | null;
   subcategory_id: string | null;
@@ -534,7 +535,7 @@ export function ProdutosClient({ products, categories }: Props) {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label htmlFor="prod-price" className={labelCls}>
-                    Preço (R$) <span className="text-red-400">*</span>
+                    {formProductType === "service" ? "Preço mínimo (R$)" : "Preço (R$)"} <span className="text-red-400">*</span>
                   </label>
                   <input
                     id="prod-price"
@@ -548,6 +549,42 @@ export function ProdutosClient({ products, categories }: Props) {
                     className={inputCls}
                   />
                 </div>
+                {formProductType === "service" ? (
+                  <div>
+                    <label htmlFor="prod-price-max" className={labelCls}>
+                      Preço máximo (R$) <span className="text-[#6b7280]">(opcional)</span>
+                    </label>
+                    <input
+                      id="prod-price-max"
+                      name="price_max"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      defaultValue={modal.kind === "edit" ? (modal.product.price_max ?? "") : ""}
+                      placeholder="0.00"
+                      className={inputCls}
+                    />
+                  </div>
+                ) : (
+                  <div>
+                    <label htmlFor="prod-stock" className={labelCls}>
+                      Estoque <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      id="prod-stock"
+                      name="stock"
+                      type="number"
+                      required
+                      min="0"
+                      step="1"
+                      defaultValue={modal.kind === "edit" ? modal.product.stock : ""}
+                      placeholder="0"
+                      className={inputCls}
+                    />
+                  </div>
+                )}
+              </div>
+              {formProductType === "service" && (
                 <div>
                   <label htmlFor="prod-stock" className={labelCls}>
                     Estoque <span className="text-red-400">*</span>
@@ -564,7 +601,7 @@ export function ProdutosClient({ products, categories }: Props) {
                     className={inputCls}
                   />
                 </div>
-              </div>
+              )}
 
               {/* Categoria e Subcategoria */}
               <div className="grid gap-4 sm:grid-cols-2">

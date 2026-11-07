@@ -12,7 +12,7 @@ export default async function AdminProdutosPage() {
     const { data: productsRaw } = await supabase
       .from("products")
       .select(
-        "id, name, description, brand, sku, barcode, internal_code, price, stock, category_id, subcategory_id, is_active, product_type, product_images(url, is_primary)"
+        "id, name, description, brand, sku, barcode, internal_code, price, price_max, stock, category_id, subcategory_id, is_active, product_type, product_images(url, is_primary)"
       )
       .order("created_at", { ascending: false });
 
@@ -50,6 +50,7 @@ export default async function AdminProdutosPage() {
       barcode: string | null;
       internal_code: string | null;
       price: number;
+      price_max: number | null;
       stock: number;
       category_id: string | null;
       subcategory_id: string | null;
@@ -79,6 +80,7 @@ export default async function AdminProdutosPage() {
         barcode: p.barcode,
         internal_code: p.internal_code,
         price: p.price,
+        price_max: p.price_max ?? null,
         stock: p.stock,
         category_id: p.category_id,
         subcategory_id: p.subcategory_id,

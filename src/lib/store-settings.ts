@@ -14,6 +14,7 @@ export interface StoreSettingsData {
   state_abbr: string | null;
   business_hours_schedule: WeekSchedule | null;
   payment_methods: string[];
+  location_url: string | null;
 }
 
 const DEFAULT: StoreSettingsData = {
@@ -25,6 +26,7 @@ const DEFAULT: StoreSettingsData = {
   state_abbr: "PA",
   business_hours_schedule: null,
   payment_methods: DEFAULT_PAYMENT_METHODS,
+  location_url: null,
 };
 
 // cache() deduplicates calls within a single render pass (request-level)
@@ -34,7 +36,7 @@ export const getStoreSettings = cache(async (): Promise<StoreSettingsData> => {
     const { data, error } = await supabase
       .from("store_settings")
       .select(
-        "store_name, whatsapp_number, email, address, city, state_abbr, business_hours_schedule, payment_methods"
+        "store_name, whatsapp_number, email, address, city, state_abbr, business_hours_schedule, payment_methods, location_url"
       )
       .single();
 
@@ -44,6 +46,7 @@ export const getStoreSettings = cache(async (): Promise<StoreSettingsData> => {
     if (!Array.isArray(result.payment_methods) || result.payment_methods.length === 0) {
       result.payment_methods = DEFAULT_PAYMENT_METHODS;
     }
+    if (result.location_url === undefined) result.location_url = null;
     return result;
   } catch {
     return DEFAULT;
