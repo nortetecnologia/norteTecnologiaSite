@@ -55,7 +55,7 @@ export function PromoBanner({ promotions }: Props) {
           <Link
             key={promo.id}
             href={`/promocao/${promo.slug}`}
-            className="relative block w-full shrink-0 overflow-hidden"
+            className="relative block w-full shrink-0 overflow-hidden min-h-[220px] sm:min-h-0"
             tabIndex={i === current ? 0 : -1}
             aria-hidden={i !== current}
           >
@@ -65,7 +65,7 @@ export function PromoBanner({ promotions }: Props) {
                 alt={promo.title}
                 width={1920}
                 height={640}
-                className="block w-full object-cover aspect-[2/1] sm:aspect-auto sm:object-contain"
+                className="block w-full h-auto"
                 unoptimized
                 priority={i === 0}
                 sizes="100vw"
