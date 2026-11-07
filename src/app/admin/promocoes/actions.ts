@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient, logAdminError } from "@/lib/supabase/admin";
+import { deleteCloudinaryImage } from "@/lib/cloudinary";
 import { revalidatePath } from "next/cache";
 
 export type PromoActionResult = { success?: boolean; error?: string };
@@ -169,8 +170,18 @@ export async function updatePromotion(id: string, formData: FormData): Promise<P
 export async function deletePromotion(id: string): Promise<PromoActionResult> {
   try {
     const supabase = await getAuthClient();
+
+    const { data: promo } = await supabase
+      .from("promotions")
+      .select("cover_image_url")
+      .eq("id", id)
+      .single();
+
     const { error } = await supabase.from("promotions").delete().eq("id", id);
     if (error) return { error: logAdminError("deletePromotion", error) };
+
+    if (promo?.cover_image_url) await deleteCloudinaryImage(promo.cover_image_url);
+
     revalidate();
     return { success: true };
   } catch (e) {

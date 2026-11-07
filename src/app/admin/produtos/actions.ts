@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient, logAdminError } from "@/lib/supabase/admin";
+import { deleteCloudinaryImage } from "@/lib/cloudinary";
 import { revalidatePath } from "next/cache";
 
 export type ProductActionResult = { success?: boolean; error?: string };
@@ -234,12 +235,20 @@ export async function deleteProduct(
       };
     }
 
+    const { data: product } = await supabase
+      .from("products")
+      .select("image_url")
+      .eq("id", id)
+      .single();
+
     const { error } = await supabase
       .from("products")
       .delete()
       .eq("id", id);
 
     if (error) return { error: logAdminError("deleteProduct", error) };
+
+    if (product?.image_url) await deleteCloudinaryImage(product.image_url);
 
     revalidate();
     return { success: true };

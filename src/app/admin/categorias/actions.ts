@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient, logAdminError } from "@/lib/supabase/admin";
+import { deleteCloudinaryImage } from "@/lib/cloudinary";
 import { revalidatePath } from "next/cache";
 
 export type CategoryActionResult = { success?: boolean; error?: string };
@@ -129,12 +130,20 @@ export async function deleteCategory(
       };
     }
 
+    const { data: category } = await supabase
+      .from("categories")
+      .select("image_url")
+      .eq("id", id)
+      .single();
+
     const { error } = await supabase
       .from("categories")
       .delete()
       .eq("id", id);
 
     if (error) return { error: logAdminError("deleteCategory", error) };
+
+    if (category?.image_url) await deleteCloudinaryImage(category.image_url);
 
     revalidate();
     return { success: true };
