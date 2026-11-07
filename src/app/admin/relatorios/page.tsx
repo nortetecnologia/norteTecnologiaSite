@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { ReviewsSection } from "./ReviewsSection";
 
 export const dynamic = "force-dynamic";
 
@@ -49,6 +50,7 @@ export default async function AdminRelatoriosPage() {
     vitrinesResult,
     lowStockResult,
     noImageResult,
+    reviewsResult,
   ] = await Promise.all([
     supabase.from("products").select("id, is_active, stock"),
     supabase
@@ -58,7 +60,7 @@ export default async function AdminRelatoriosPage() {
     supabase
       .from("vitrines")
       .select("id, title, display_type, is_active, vitrine_products(id)")
-      .order("display_order"),
+      .order("position"),
     supabase
       .from("products")
       .select("id, name, slug, stock, category:categories(name)")
@@ -72,6 +74,11 @@ export default async function AdminRelatoriosPage() {
       .eq("is_active", true)
       .order("name")
       .limit(20),
+    supabase
+      .from("product_reviews")
+      .select("id, name, rating, message, created_at, product:products(name, slug)")
+      .order("created_at", { ascending: false })
+      .limit(500),
   ]);
 
   // Summary counts
@@ -145,6 +152,18 @@ export default async function AdminRelatoriosPage() {
     grid: "Grade",
     row: "Linha",
   };
+
+  // Reviews
+  type RawReview = { id: string; name: string | null; rating: number; message: string; created_at: string; product: { name: string; slug: string } | null };
+  const reviewRows = ((reviewsResult.data ?? []) as unknown as RawReview[]).map((r) => ({
+    id: r.id,
+    product_name: r.product?.name ?? "Produto removido",
+    product_slug: r.product?.slug ?? "",
+    name: r.name,
+    rating: r.rating,
+    message: r.message,
+    created_at: r.created_at,
+  }));
 
   return (
     <div className="max-w-5xl space-y-8">
@@ -374,6 +393,9 @@ export default async function AdminRelatoriosPage() {
           </div>
         </section>
       )}
+
+      {/* Reviews */}
+      <ReviewsSection reviews={reviewRows} />
 
       {/* Notice about future metrics */}
       <div className="bg-[#1a1a1a] border border-dashed border-[#2a2a2a] rounded-xl p-6 text-center">
