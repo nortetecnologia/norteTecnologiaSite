@@ -1,7 +1,7 @@
 {
   "name": "Norte Tecnologia",
   "short_name": "Norte Tec",
-  "description": "Computadores, notebooks, periféricos e serviços técnicos de informática.",
+  "description": "Computadores, notebooks, perifericos e servicos tecnicos de informatica.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -12,14 +12,14 @@
   "categories": ["shopping", "technology"],
   "icons": [
     {
-      "src": "/api/pwa-icon",
-      "sizes": "512x512",
+      "src": "/logo.png",
+      "sizes": "any",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/api/pwa-icon",
-      "sizes": "512x512",
+      "src": "/logo.png",
+      "sizes": "any",
       "type": "image/png",
       "purpose": "maskable"
     }
