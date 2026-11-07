@@ -337,7 +337,7 @@ export default async function HomePage() {
                     <iframe
                       src={settings.location_url}
                       width="100%"
-                      height="300"
+                      height="480"
                       style={{ border: 0 }}
                       allowFullScreen
                       loading="lazy"
