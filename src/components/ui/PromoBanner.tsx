@@ -11,6 +11,7 @@ export interface PromoItem {
   subtitle: string | null;
   discount_percent: number | null;
   cover_image_url: string | null;
+  show_banner_text?: boolean | null;
 }
 
 interface Props {
@@ -80,24 +81,23 @@ export function PromoBanner({ promotions }: Props) {
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
             {/* Conteúdo */}
-            <div className="absolute bottom-0 left-0 max-w-2xl px-5 pb-5 sm:px-8 sm:pb-7 lg:px-12 lg:pb-10">
-              {promo.discount_percent && (
-                <span className="mb-2 inline-block rounded-full bg-red-600 px-2.5 py-0.5 text-xs font-bold text-white sm:text-sm">
-                  -{promo.discount_percent}% OFF
-                </span>
-              )}
-              <h2 className="line-clamp-2 text-lg font-extrabold leading-tight text-white sm:text-2xl lg:text-4xl">
-                {promo.title}
-              </h2>
-              {promo.subtitle && (
-                <p className="mt-1 line-clamp-1 text-xs text-gray-300 sm:text-sm lg:text-base">
-                  {promo.subtitle}
-                </p>
-              )}
-              <span className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#ffd600] px-3 py-1.5 text-xs font-bold text-black sm:px-4 sm:py-2 sm:text-sm">
-                Ver promoção →
-              </span>
-            </div>
+            {promo.show_banner_text !== false && (
+              <div className="absolute bottom-0 left-0 max-w-2xl px-5 pb-5 sm:px-8 sm:pb-7 lg:px-12 lg:pb-10">
+                {promo.discount_percent && (
+                  <span className="mb-2 inline-block rounded-full bg-red-600 px-2.5 py-0.5 text-xs font-bold text-white sm:text-sm">
+                    -{promo.discount_percent}% OFF
+                  </span>
+                )}
+                <h2 className="line-clamp-2 text-lg font-extrabold leading-tight text-white sm:text-2xl lg:text-4xl">
+                  {promo.title}
+                </h2>
+                {promo.subtitle && (
+                  <p className="mt-1 line-clamp-1 text-xs text-gray-300 sm:text-sm lg:text-base">
+                    {promo.subtitle}
+                  </p>
+                )}
+              </div>
+            )}
           </Link>
         ))}
       </div>

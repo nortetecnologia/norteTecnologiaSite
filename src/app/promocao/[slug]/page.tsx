@@ -71,47 +71,34 @@ export default async function PromoPage({ params }: Props) {
       <Header />
       <main className="min-h-screen bg-brand-black">
         {/* Banner */}
-        <section className="relative overflow-hidden bg-[#0a0a0a]">
-          {promo.cover_image_url ? (
-            <div className="relative h-48 w-full sm:h-64 lg:h-80">
+        <section className="bg-[#0a0a0a]">
+          {promo.cover_image_url && (
+            <div className="relative w-full overflow-hidden">
               <Image
                 src={promo.cover_image_url}
                 alt={promo.title}
-                fill
-                className="object-cover"
+                width={1920}
+                height={640}
+                className="block w-full h-auto"
                 priority
                 unoptimized
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-              <div className="absolute bottom-0 left-0 w-full px-6 py-6 lg:px-8">
-                <div className="mx-auto max-w-content">
-                  {promo.discount_percent && (
-                    <span className="mb-2 inline-block rounded-full bg-red-600 px-3 py-1 text-sm font-bold text-white">
-                      -{promo.discount_percent}% OFF
-                    </span>
-                  )}
-                  <h1 className="text-3xl font-extrabold text-white lg:text-5xl">{promo.title}</h1>
-                  {promo.subtitle && (
-                    <p className="mt-2 text-base text-gray-300 lg:text-lg">{promo.subtitle}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="px-6 py-12 lg:px-8">
-              <div className="mx-auto max-w-content">
-                {promo.discount_percent && (
-                  <span className="mb-3 inline-block rounded-full bg-red-600 px-3 py-1 text-sm font-bold text-white">
-                    -{promo.discount_percent}% OFF
-                  </span>
-                )}
-                <h1 className="text-3xl font-extrabold text-white lg:text-5xl">{promo.title}</h1>
-                {promo.subtitle && (
-                  <p className="mt-3 text-base text-gray-400 lg:text-lg">{promo.subtitle}</p>
-                )}
-              </div>
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
             </div>
           )}
+          <div className="px-6 py-8 lg:px-8">
+            <div className="mx-auto max-w-content">
+              {promo.discount_percent && (
+                <span className="mb-3 inline-block rounded-full bg-red-600 px-3 py-1 text-sm font-bold text-white">
+                  -{promo.discount_percent}% OFF
+                </span>
+              )}
+              <h1 className="text-3xl font-extrabold text-white lg:text-5xl">{promo.title}</h1>
+              {promo.subtitle && (
+                <p className="mt-2 text-base text-gray-300 lg:text-lg">{promo.subtitle}</p>
+              )}
+            </div>
+          </div>
         </section>
 
         {/* Produtos */}

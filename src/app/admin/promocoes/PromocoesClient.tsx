@@ -20,6 +20,7 @@ export interface PromotionData {
   discount_percent: number | null;
   cover_image_url: string | null;
   is_active: boolean;
+  show_banner_text: boolean;
   position: number;
   product_count: number;
 }
@@ -60,6 +61,7 @@ export function PromocoesClient({ promotions, products }: Props) {
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [productSearch, setProductSearch] = useState("");
   const [isActive, setIsActive] = useState(true);
+  const [showBannerText, setShowBannerText] = useState(true);
 
   function openCreate() {
     setCoverImageUrl("");
@@ -68,6 +70,7 @@ export function PromocoesClient({ promotions, products }: Props) {
     setSelectedProductIds([]);
     setProductSearch("");
     setIsActive(true);
+    setShowBannerText(true);
     setFormError(null);
     setModal({ kind: "create" });
   }
@@ -79,6 +82,7 @@ export function PromocoesClient({ promotions, products }: Props) {
     setSelectedProductIds(linkedIds);
     setProductSearch("");
     setIsActive(promo.is_active);
+    setShowBannerText(promo.show_banner_text);
     setFormError(null);
     setModal({ kind: "edit", promo, linkedIds });
   }
@@ -98,6 +102,7 @@ export function PromocoesClient({ promotions, products }: Props) {
     const fd = new FormData(e.currentTarget);
     fd.set("cover_image_url", coverImageUrl);
     fd.set("is_active", isActive ? "true" : "false");
+    fd.set("show_banner_text", showBannerText ? "true" : "false");
     fd.set("product_ids", selectedProductIds.join(","));
 
     if (modal.kind === "create") {
@@ -332,8 +337,8 @@ export function PromocoesClient({ promotions, products }: Props) {
                 />
               </div>
 
-              {/* Desconto */}
-              <div className="grid gap-4 sm:grid-cols-2">
+              {/* Desconto + Status + Exibir texto */}
+              <div className="grid gap-4 sm:grid-cols-3">
                 <div>
                   <label htmlFor="promo-discount" className={labelCls}>Desconto % <span className="text-[#4b5563] font-normal">(opcional)</span></label>
                   <input
@@ -367,6 +372,25 @@ export function PromocoesClient({ promotions, products }: Props) {
                   {isActive && activeCnt >= 4 && modal.kind === "create" && (
                     <p className="mt-1 text-[11px] text-yellow-400">Limite de 4 ativas atingido</p>
                   )}
+                </div>
+                {/* Exibir texto no banner */}
+                <div>
+                  <span className={labelCls}>Texto no banner</span>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={showBannerText}
+                    onClick={() => setShowBannerText((v) => !v)}
+                    className={`mt-1 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm transition-colors ${
+                      showBannerText
+                        ? "bg-blue-900/30 text-blue-400 border-blue-800/40"
+                        : "bg-[#2a2a2a] text-[#9ca3af] border-[#3a3a3a]"
+                    }`}
+                  >
+                    <span className={`w-2 h-2 rounded-full ${showBannerText ? "bg-blue-400" : "bg-[#4b5563]"}`} aria-hidden="true" />
+                    {showBannerText ? "Visível" : "Oculto"}
+                  </button>
+                  <p className="mt-1 text-[11px] text-[#4b5563]">Título/badge na tela inicial</p>
                 </div>
               </div>
 
