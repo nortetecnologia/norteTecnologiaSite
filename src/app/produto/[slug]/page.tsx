@@ -7,6 +7,9 @@ import Footer from "@/components/layout/Footer";
 import { formatCurrency } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
 import { AddToCartButton } from "@/components/ui/AddToCartButton";
+import { ReviewForm } from "@/components/ui/ReviewForm";
+import { ReviewsList } from "@/components/ui/ReviewsList";
+import { Suspense } from "react";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -217,6 +220,26 @@ export default async function ProductPage({ params }: PageProps) {
                 </div>
               </div>
             )}
+          </div>
+        </section>
+
+        {/* Avaliações */}
+        <section className="border-t border-brand-gray-mid px-4 py-10 lg:px-8">
+          <div className="mx-auto max-w-content">
+            <div className="grid gap-10 lg:grid-cols-2">
+              {/* Lista de avaliações */}
+              <div>
+                <h2 className="mb-6 text-xl font-bold text-white lg:text-2xl">Avaliações</h2>
+                <Suspense fallback={<p className="text-sm text-gray-500">Carregando avaliações…</p>}>
+                  <ReviewsList productId={product.id} />
+                </Suspense>
+              </div>
+              {/* Formulário */}
+              <div>
+                <h2 className="mb-6 text-xl font-bold text-white lg:text-2xl">Deixe sua avaliação</h2>
+                <ReviewForm productId={product.id} />
+              </div>
+            </div>
           </div>
         </section>
       </main>
