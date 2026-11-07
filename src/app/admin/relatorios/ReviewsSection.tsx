@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useTransition } from "react";
+import { deleteReview } from "@/app/actions/deleteReview";
 
 interface ReviewRow {
   id: string;
@@ -23,6 +24,49 @@ function Stars({ rating }: { rating: number }) {
         <span key={s} className={s <= rating ? "text-[#ffd600]" : "text-[#3a3a3a]"} aria-hidden="true">★</span>
       ))}
     </span>
+  );
+}
+
+function DeleteButton({ reviewId }: { reviewId: string }) {
+  const [pending, startTransition] = useTransition();
+  const [confirmed, setConfirmed] = useState(false);
+
+  if (!confirmed) {
+    return (
+      <button
+        type="button"
+        onClick={() => setConfirmed(true)}
+        className="text-xs text-[#6b7280] hover:text-red-400 transition-colors shrink-0"
+        aria-label="Excluir avaliação"
+      >
+        Excluir
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2 shrink-0">
+      <span className="text-xs text-[#9ca3af]">Confirmar?</span>
+      <button
+        type="button"
+        disabled={pending}
+        onClick={() => {
+          startTransition(async () => {
+            await deleteReview(reviewId);
+          });
+        }}
+        className="text-xs font-semibold text-red-400 hover:text-red-300 disabled:opacity-50 transition-colors"
+      >
+        {pending ? "..." : "Sim"}
+      </button>
+      <button
+        type="button"
+        onClick={() => setConfirmed(false)}
+        className="text-xs text-[#6b7280] hover:text-white transition-colors"
+      >
+        Não
+      </button>
+    </div>
   );
 }
 
@@ -122,9 +166,12 @@ export function ReviewsSection({ reviews }: ReviewsSectionProps) {
                   <Stars rating={r.rating} />
                   <span className="text-sm font-medium text-white">{r.name ?? "Cliente anônimo"}</span>
                 </div>
-                <time dateTime={r.created_at} className="text-xs text-[#6b7280] shrink-0">
-                  {new Date(r.created_at).toLocaleDateString("pt-BR")}
-                </time>
+                <div className="flex items-center gap-3">
+                  <time dateTime={r.created_at} className="text-xs text-[#6b7280] shrink-0">
+                    {new Date(r.created_at).toLocaleDateString("pt-BR")}
+                  </time>
+                  <DeleteButton reviewId={r.id} />
+                </div>
               </div>
               <p className="text-xs text-[#ffd600] font-medium">{r.product_name}</p>
               <p className="text-sm text-[#9ca3af] leading-relaxed">{r.message}</p>
