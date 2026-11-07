@@ -12,14 +12,14 @@
   "categories": ["shopping", "technology"],
   "icons": [
     {
-      "src": "/logo.png",
-      "sizes": "any",
+      "src": "/api/pwa-icon",
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/logo.png",
-      "sizes": "any",
+      "src": "/api/pwa-icon",
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     }

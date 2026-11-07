@@ -33,10 +33,6 @@ export const metadata: Metadata = {
     "norte tecnologia",
   ],
   manifest: "/manifest.json",
-  icons: {
-    icon: "/logo.png",
-    apple: "/logo.png",
-  },
   appleWebApp: {
     capable: true,
     title: "Norte Tecnologia",
