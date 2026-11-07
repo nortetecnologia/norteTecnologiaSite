@@ -55,7 +55,7 @@ export function PromoBanner({ promotions }: Props) {
           <Link
             key={promo.id}
             href={`/promocao/${promo.slug}`}
-            className="relative block h-[180px] w-full shrink-0 sm:h-[260px] lg:h-[380px]"
+            className="relative block w-full shrink-0 overflow-hidden"
             tabIndex={i === current ? 0 : -1}
             aria-hidden={i !== current}
           >
@@ -63,14 +63,15 @@ export function PromoBanner({ promotions }: Props) {
               <Image
                 src={promo.cover_image_url}
                 alt={promo.title}
-                fill
-                className="object-cover"
+                width={1920}
+                height={640}
+                className="block w-full h-auto"
                 unoptimized
                 priority={i === 0}
                 sizes="100vw"
               />
             ) : (
-              <div className="absolute inset-0 bg-gradient-to-br from-[#1c1c1c] via-[#111] to-[#0a0a0a]" />
+              <div className="h-[180px] bg-gradient-to-br from-[#1c1c1c] via-[#111] to-[#0a0a0a] sm:h-[260px] lg:h-[380px]" />
             )}
 
             {/* Gradiente esquerda → direita */}
