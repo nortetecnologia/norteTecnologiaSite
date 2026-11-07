@@ -21,28 +21,6 @@ const STATIC_CATEGORIES = [
   { name: "Acessórios", icon: "🎧", slug: "acessorios" },
 ];
 
-const services = [
-  {
-    name: "Manutenção de Computadores",
-    description: "Diagnóstico, limpeza e reparo de desktops e notebooks.",
-    icon: "🔧",
-  },
-  {
-    name: "Manutenção de Impressoras",
-    description: "Desentupimento de cabeça de impressão, troca de peças e calibração.",
-    icon: "🖨️",
-  },
-  {
-    name: "Montagem de Computadores",
-    description: "Monte o PC ideal para o seu perfil com componentes de qualidade.",
-    icon: "🔩",
-  },
-  {
-    name: "Instalação e Configuração",
-    description: "Instalação de sistemas operacionais, programas e redes.",
-    icon: "⚡",
-  },
-];
 
 interface PromoRow {
   id: string;
@@ -270,36 +248,6 @@ export default async function HomePage() {
                   </span>
                 </Link>
               ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Serviços */}
-        <section className="border-t border-brand-gray-mid px-4 py-10 lg:px-8">
-          <div className="mx-auto max-w-content">
-            <h2 className="mb-2 text-xl font-bold text-white lg:text-2xl">Serviços Técnicos</h2>
-            <p className="mb-6 text-sm text-gray-400">Atendimento especializado para sua necessidade.</p>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {services.map((service) => (
-                <div
-                  key={service.name}
-                  className="rounded-lg border border-brand-gray-mid bg-brand-gray-dark p-5 transition-colors hover:border-brand-yellow"
-                >
-                  <span className="mb-3 block text-2xl" aria-hidden="true">{service.icon}</span>
-                  <h3 className="mb-1 text-sm font-semibold text-white">{service.name}</h3>
-                  <p className="text-xs leading-relaxed text-gray-400">{service.description}</p>
-                </div>
-              ))}
-            </div>
-            <div className="mt-6 text-center">
-              <a
-                href={whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-md bg-brand-yellow px-5 py-2.5 text-sm font-semibold text-brand-black transition-colors hover:bg-brand-yellow-dark"
-              >
-                Solicitar Serviço pelo WhatsApp
-              </a>
             </div>
           </div>
         </section>
