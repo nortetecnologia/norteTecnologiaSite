@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { useConsent } from "@/contexts/ConsentContext";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -54,6 +55,7 @@ function isAlreadyInstalled(): boolean {
 }
 
 export function InstallPrompt() {
+  const { state: consentState } = useConsent();
   const deferredPrompt = useRef<BeforeInstallPromptEvent | null>(null);
   const [mode, setMode] = useState<"hidden" | "android" | "ios">("hidden");
   const [installing, setInstalling] = useState(false);
@@ -63,6 +65,9 @@ export function InstallPrompt() {
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js").catch(() => {});
     }
+
+    // Don't show install prompt while user hasn't decided on LGPD consent yet
+    if (consentState === "pending") return;
 
     if (isAlreadyInstalled()) return;
     if (!shouldShow(readStored())) return;
@@ -80,7 +85,7 @@ export function InstallPrompt() {
 
     window.addEventListener("beforeinstallprompt", handler);
     return () => window.removeEventListener("beforeinstallprompt", handler);
-  }, []);
+  }, [consentState]);
 
   async function handleInstall() {
     const p = deferredPrompt.current;
