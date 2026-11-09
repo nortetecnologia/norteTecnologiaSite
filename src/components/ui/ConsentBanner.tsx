@@ -4,9 +4,10 @@ import Link from "next/link";
 import { useConsent } from "@/contexts/ConsentContext";
 
 export function ConsentBanner() {
-  const { state, accept, deny } = useConsent();
+  const { state, accept, deny, mounted } = useConsent();
 
-  if (state !== "pending") return null;
+  // Aguarda hidratação antes de renderizar para evitar flash em quem já respondeu
+  if (!mounted || state !== "pending") return null;
 
   return (
     <div

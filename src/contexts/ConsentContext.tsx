@@ -9,6 +9,7 @@ interface ConsentContextValue {
   accept: () => void;
   deny: () => void;
   canTrack: boolean;
+  mounted: boolean;
 }
 
 const STORAGE_KEY = "nt_analytics_consent";
@@ -18,10 +19,12 @@ const ConsentContext = createContext<ConsentContextValue>({
   accept: () => {},
   deny: () => {},
   canTrack: false,
+  mounted: false,
 });
 
 export function ConsentProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<ConsentState>("pending");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     try {
@@ -29,6 +32,7 @@ export function ConsentProvider({ children }: { children: React.ReactNode }) {
       if (stored === "accepted") setState("accepted");
       else if (stored === "denied") setState("denied");
     } catch {}
+    setMounted(true);
   }, []);
 
   const accept = useCallback(() => {
@@ -42,7 +46,7 @@ export function ConsentProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <ConsentContext.Provider value={{ state, accept, deny, canTrack: state === "accepted" }}>
+    <ConsentContext.Provider value={{ state, accept, deny, canTrack: state === "accepted", mounted }}>
       {children}
     </ConsentContext.Provider>
   );

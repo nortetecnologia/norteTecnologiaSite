@@ -95,7 +95,7 @@ const IOS_STEPS = [
 ];
 
 export function InstallPrompt() {
-  const { state: consentState } = useConsent();
+  const { state: consentState, mounted: consentMounted } = useConsent();
   const deferredPrompt = useRef<BeforeInstallPromptEvent | null>(null);
   const [mode, setMode] = useState<"hidden" | "android" | "ios">("hidden");
   const [installing, setInstalling] = useState(false);
@@ -105,7 +105,7 @@ export function InstallPrompt() {
       navigator.serviceWorker.register("/sw.js").catch(() => {});
     }
 
-    if (consentState === "pending") return;
+    if (!consentMounted || consentState === "pending") return;
     if (isAlreadyInstalled()) return;
     if (!shouldShow(readStored())) return;
 
@@ -122,7 +122,7 @@ export function InstallPrompt() {
 
     window.addEventListener("beforeinstallprompt", handler);
     return () => window.removeEventListener("beforeinstallprompt", handler);
-  }, [consentState]);
+  }, [consentState, consentMounted]);
 
   async function handleInstall() {
     const p = deferredPrompt.current;
