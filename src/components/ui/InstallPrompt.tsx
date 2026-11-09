@@ -39,9 +39,23 @@ function shouldShow(stored: Stored | null): boolean {
   return true;
 }
 
+function detectIOS(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
+function isAlreadyInstalled(): boolean {
+  if (typeof window === "undefined") return false;
+  return (
+    window.matchMedia("(display-mode: standalone)").matches ||
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (navigator as any).standalone === true
+  );
+}
+
 export function InstallPrompt() {
   const deferredPrompt = useRef<BeforeInstallPromptEvent | null>(null);
-  const [visible, setVisible] = useState(false);
+  const [mode, setMode] = useState<"hidden" | "android" | "ios">("hidden");
   const [installing, setInstalling] = useState(false);
 
   useEffect(() => {
@@ -50,12 +64,18 @@ export function InstallPrompt() {
       navigator.serviceWorker.register("/sw.js").catch(() => {});
     }
 
+    if (isAlreadyInstalled()) return;
     if (!shouldShow(readStored())) return;
+
+    if (detectIOS()) {
+      setMode("ios");
+      return;
+    }
 
     const handler = (e: Event) => {
       e.preventDefault();
       deferredPrompt.current = e as BeforeInstallPromptEvent;
-      setVisible(true);
+      setMode("android");
     };
 
     window.addEventListener("beforeinstallprompt", handler);
@@ -73,21 +93,21 @@ export function InstallPrompt() {
     } finally {
       deferredPrompt.current = null;
       setInstalling(false);
-      setVisible(false);
+      setMode("hidden");
     }
   }
 
   function handleLater() {
     write({ decision: "later", at: Date.now() });
-    setVisible(false);
+    setMode("hidden");
   }
 
   function handleNever() {
     write({ decision: "never" });
-    setVisible(false);
+    setMode("hidden");
   }
 
-  if (!visible) return null;
+  if (mode === "hidden") return null;
 
   return (
     <div
@@ -97,6 +117,7 @@ export function InstallPrompt() {
     >
       <div className="bg-[#111111] border-t border-[#2a2a2a] shadow-2xl px-4 py-4 sm:px-6">
         <div className="mx-auto max-w-lg flex flex-col gap-4">
+
           {/* App info */}
           <div className="flex items-center gap-3">
             <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl border border-[#2a2a2a]">
@@ -113,41 +134,72 @@ export function InstallPrompt() {
               <p className="text-sm font-semibold text-white leading-tight">
                 Norte Tecnologia
               </p>
-              <p className="text-xs text-[#9ca3af] mt-0.5 leading-tight">
-                Instale o app e acesse mais rápido
-              </p>
+              {mode === "ios" ? (
+                <p className="text-xs text-[#9ca3af] mt-0.5 leading-tight">
+                  Instale no iPhone para acesso rápido
+                </p>
+              ) : (
+                <p className="text-xs text-[#9ca3af] mt-0.5 leading-tight">
+                  Instale o app e acesse mais rápido
+                </p>
+              )}
             </div>
           </div>
 
+          {/* iOS instructions */}
+          {mode === "ios" && (
+            <div className="flex items-start gap-2 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a] px-3 py-3">
+              <span className="text-lg leading-none mt-0.5" aria-hidden="true">ⓘ</span>
+              <p className="text-xs text-[#d1d5db] leading-relaxed">
+                Toque em{" "}
+                <span className="inline-flex items-center gap-0.5 font-medium text-white">
+                  {/* Share icon */}
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5" aria-hidden="true">
+                    <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" />
+                  </svg>
+                  Compartilhar
+                </span>{" "}
+                na barra do Safari e depois em{" "}
+                <strong className="text-white">&ldquo;Adicionar à Tela de Início&rdquo;</strong>.
+              </p>
+            </div>
+          )}
+
           {/* Actions */}
           <div className="flex items-center gap-2 flex-wrap">
-            <button
-              onClick={handleInstall}
-              disabled={installing}
-              className="flex-1 min-w-[120px] rounded-lg bg-[#ffd600] px-4 py-2.5 text-sm font-semibold text-black hover:bg-[#f5cc00] active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {installing ? (
-                <>
-                  <span className="inline-block h-3.5 w-3.5 rounded-full border-2 border-black/30 border-t-black animate-spin" />
-                  Instalando…
-                </>
-              ) : (
-                "Instalar agora"
-              )}
-            </button>
-            <button
-              onClick={handleLater}
-              disabled={installing}
-              className="flex-1 min-w-[100px] rounded-lg border border-[#3a3a3a] px-4 py-2.5 text-sm font-medium text-[#d1d5db] hover:border-[#555] hover:text-white active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              Mais tarde
-            </button>
+            {mode === "android" && (
+              <button
+                onClick={handleInstall}
+                disabled={installing}
+                className="flex-1 min-w-[120px] rounded-lg bg-[#ffd600] px-4 py-2.5 text-sm font-semibold text-black hover:bg-[#f5cc00] active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {installing ? (
+                  <>
+                    <span className="inline-block h-3.5 w-3.5 rounded-full border-2 border-black/30 border-t-black animate-spin" />
+                    Instalando…
+                  </>
+                ) : (
+                  "Instalar agora"
+                )}
+              </button>
+            )}
+
+            {mode === "android" && (
+              <button
+                onClick={handleLater}
+                disabled={installing}
+                className="flex-1 min-w-[100px] rounded-lg border border-[#3a3a3a] px-4 py-2.5 text-sm font-medium text-[#d1d5db] hover:border-[#555] hover:text-white active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Mais tarde
+              </button>
+            )}
+
             <button
               onClick={handleNever}
               disabled={installing}
-              className="px-3 py-2.5 text-xs text-[#6b7280] hover:text-[#9ca3af] active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              className={`px-3 py-2.5 text-xs text-[#6b7280] hover:text-[#9ca3af] active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed ${mode === "ios" ? "ml-auto" : ""}`}
             >
-              Nunca
+              {mode === "ios" ? "Fechar" : "Nunca"}
             </button>
           </div>
         </div>

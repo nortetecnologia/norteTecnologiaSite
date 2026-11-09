@@ -1,7 +1,7 @@
-const CACHE = "nt-v2";
+const CACHE = "nt-v3";
 
-self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.add("/")));
+self.addEventListener("install", () => {
+  // Skip waiting immediately — no blocking network request on install.
   self.skipWaiting();
 });
 
