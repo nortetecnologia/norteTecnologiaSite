@@ -99,9 +99,6 @@ export function InstallPrompt() {
   const deferredPrompt = useRef<BeforeInstallPromptEvent | null>(null);
   const [mode, setMode] = useState<"hidden" | "android" | "ios">("hidden");
   const [installing, setInstalling] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [activeStep, setActiveStep] = useState(0);
-  const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if ("serviceWorker" in navigator) {
@@ -127,43 +124,6 @@ export function InstallPrompt() {
     return () => window.removeEventListener("beforeinstallprompt", handler);
   }, [consentState]);
 
-  // Animate progress bar while installing
-  useEffect(() => {
-    if (installing) {
-      setProgress(0);
-      let current = 0;
-      progressRef.current = setInterval(() => {
-        // Fast from 0→70, then slow down (Chrome awaiting user confirmation)
-        const increment = current < 70 ? 4 : 0.5;
-        current = Math.min(current + increment, 88);
-        setProgress(current);
-        if (current >= 88 && progressRef.current) {
-          clearInterval(progressRef.current);
-        }
-      }, 80);
-    } else {
-      if (progressRef.current) clearInterval(progressRef.current);
-      if (progress > 0) {
-        setProgress(100);
-        const t = setTimeout(() => setProgress(0), 600);
-        return () => clearTimeout(t);
-      }
-    }
-    return () => {
-      if (progressRef.current) clearInterval(progressRef.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [installing]);
-
-  // Auto-advance iOS steps for visual guidance
-  useEffect(() => {
-    if (mode !== "ios") return;
-    setActiveStep(0);
-    const t1 = setTimeout(() => setActiveStep(1), 3000);
-    const t2 = setTimeout(() => setActiveStep(2), 6000);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, [mode]);
-
   async function handleInstall() {
     const p = deferredPrompt.current;
     if (!p) return;
@@ -171,9 +131,7 @@ export function InstallPrompt() {
     try {
       await p.prompt();
       const { outcome } = await p.userChoice;
-      if (outcome === "accepted") {
-        write({ decision: "installed" });
-      }
+      if (outcome === "accepted") write({ decision: "installed" });
     } finally {
       deferredPrompt.current = null;
       setInstalling(false);
@@ -222,7 +180,7 @@ export function InstallPrompt() {
                 {mode === "ios"
                   ? "Instale no iPhone para acesso rápido"
                   : installing
-                  ? "Instalando o app…"
+                  ? "Confirme a instalação no Chrome…"
                   : "Instale o app e acesse mais rápido"}
               </p>
             </div>
@@ -231,68 +189,24 @@ export function InstallPrompt() {
           {/* iOS: numbered steps */}
           {mode === "ios" && (
             <ol className="flex flex-col gap-2" aria-label="Passos para instalar">
-              {IOS_STEPS.map((step, i) => {
-                const done = i < activeStep;
-                const active = i === activeStep;
-                return (
-                  <li
-                    key={i}
-                    className={`flex items-start gap-3 rounded-lg px-3 py-2.5 transition-all duration-500 ${
-                      done
-                        ? "bg-[#1a1a1a] opacity-50"
-                        : active
-                        ? "bg-[#1a1a1a] border border-brand-yellow/40"
-                        : "bg-[#141414] opacity-40"
-                    }`}
+              {IOS_STEPS.map((step, i) => (
+                <li
+                  key={i}
+                  className="flex items-start gap-3 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a] px-3 py-2.5"
+                >
+                  <span
+                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#2a2a2a] text-xs font-bold text-[#9ca3af]"
+                    aria-hidden="true"
                   >
-                    {/* Step number / check */}
-                    <span
-                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-all duration-300 ${
-                        done
-                          ? "bg-green-700 text-white"
-                          : active
-                          ? "bg-brand-yellow text-black"
-                          : "bg-[#2a2a2a] text-[#6b7280]"
-                      }`}
-                      aria-hidden="true"
-                    >
-                      {done ? (
-                        <svg viewBox="0 0 12 12" fill="currentColor" className="h-3 w-3">
-                          <polyline points="1.5 6 4.5 9 10.5 3" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      ) : (
-                        i + 1
-                      )}
-                    </span>
-
-                    {/* Icon + label */}
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className={`shrink-0 ${active ? "text-brand-yellow" : done ? "text-green-600" : "text-[#4b5563]"}`}>
-                        {step.icon}
-                      </span>
-                      <span className="text-xs text-[#d1d5db] leading-relaxed">
-                        {step.label}
-                      </span>
-                    </div>
-                  </li>
-                );
-              })}
+                    {i + 1}
+                  </span>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="shrink-0 text-[#9ca3af]">{step.icon}</span>
+                    <span className="text-xs text-[#d1d5db] leading-relaxed">{step.label}</span>
+                  </div>
+                </li>
+              ))}
             </ol>
-          )}
-
-          {/* Android: progress bar when installing */}
-          {mode === "android" && installing && (
-            <div className="flex flex-col gap-1.5">
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#2a2a2a]">
-                <div
-                  className="h-full rounded-full bg-brand-yellow transition-all"
-                  style={{ width: `${progress}%`, transitionDuration: progress === 100 ? "300ms" : "80ms" }}
-                />
-              </div>
-              <p className="text-[10px] text-[#6b7280] text-center">
-                Aguardando confirmação no Chrome…
-              </p>
-            </div>
           )}
 
           {/* Actions */}
@@ -306,7 +220,7 @@ export function InstallPrompt() {
                 {installing ? (
                   <>
                     <span className="inline-block h-3.5 w-3.5 rounded-full border-2 border-black/30 border-t-black animate-spin" />
-                    Instalando…
+                    Aguardando…
                   </>
                 ) : (
                   "Instalar agora"
