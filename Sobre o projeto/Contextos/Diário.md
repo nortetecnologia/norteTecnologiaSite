@@ -8,23 +8,38 @@
 
 ## 1. Estado atual do projeto
 
-- **Estágio:** Admin completo + Páginas públicas completas + Carrinho + Checkout + Formas de pagamento configuráveis + Menu mobile funcional + Header redesenhado + Upload de imagens via Cloudinary + Drawer de categorias + Sistema de promoções + PromoBanner homepage + Busca pública + Cabeçalhos de segurança HTTP + Filtros is_active + PWA instalável + Fuso UTC-4 (Rorainópolis) + **Mapa configurável** + **Feedback LGPD** + **Preço faixa para serviços** + **Limpeza de imagem Cloudinary ao excluir** + **bodySizeLimit 10mb**.
-- **Última atividade:** 2026-11-07 — Sprint multi-tarefa: toggle bug, Maps embed, Feedback LGPD, price_max serviços.
-- **Situação geral:** Deploy funcional na Vercel. Build 100% limpo (zero erros tsc). **Aplicar migrations 011 e 012 no Supabase SQL Editor.**
-- **Próxima etapa:** Aplicar migrations 011 e 012 no Supabase. Configurar URL do Google Maps em Configurações do admin.
+- **Estágio:** Admin completo + Páginas públicas completas + Carrinho + Checkout + Formas de pagamento configuráveis + Menu mobile funcional + Header redesenhado + Upload de imagens via Cloudinary + Drawer de categorias + Sistema de promoções + PromoBanner homepage + Busca pública + Cabeçalhos de segurança HTTP + Filtros is_active + PWA instalável (iOS + Android) + Fuso UTC-4 (Rorainópolis) + **Mapa configurável** + **Feedback LGPD** + **Preço faixa para serviços** + **Analytics LGPD (cliques + pesquisas)** + **SearchBar com dropdown ao vivo** + **Banner consentimento LGPD**.
+- **Última atividade:** 2026-11-09 — Analytics LGPD, SearchBar dropdown, PWA iOS, SW fix.
+- **Situação geral:** Deploy funcional na Vercel. Build limpo. Migration analytics.sql aplicada. **Migrations 011 e 012 ainda pendentes no Supabase.**
+- **Próxima etapa:** Aplicar migrations 011 e 012. Configurar URL do Google Maps em Configurações.
 
 ---
 
 ## 2. Última atualização
 
-- **Data:** 2026-11-07
-- **Atividade:** Sprint multi-tarefa — toggle bug fix, Maps embed configurável, sistema de Feedback LGPD, preço faixa para serviços (price_max).
-- **Resultado:** tsc sem erros.
-- **Situação:** Branch `claude/norte-tecnologia-setup-f7c541`. **Aplicar migrations 011 e 012 antes de usar novas funcionalidades em produção.**
+- **Data:** 2026-11-09
+- **Atividade:** Analytics LGPD (cliques/pesquisas) + SearchBar dropdown + PWA iOS instructions + SW sem trava de rede.
+- **Resultado:** Mergeado no main, deployado na Vercel. Migration analytics.sql aplicada no Supabase.
+- **Situação:** Branch `claude/norte-tecnologia-setup-f7c541`. Migrations 011 e 012 ainda pendentes.
 
 ---
 
 ## 3. Implementações concluídas
+
+### 2026-11-09 — Analytics LGPD + SearchBar dropdown + PWA iOS + SW fix
+
+- **Objetivo:** Rastreamento de cliques/pesquisas com consentimento LGPD, busca com sugestões ao vivo, suporte a instalação no iPhone, instalação mais rápida no Android.
+- **Implementação:**
+  1. **Analytics LGPD:** `ConsentContext.tsx` (estado aceitar/recusar em localStorage), `ConsentBanner.tsx` (banner fixo bottom), `src/app/actions/analytics.ts` (Server Actions `trackProductClick` + `trackSearch` via service_role), `SearchTracker.tsx` (rastreia queries na busca), `ProductCard.tsx` atualizado para "use client" com tracking de clique. Tabelas `analytics_events` e `search_queries` com RLS (service_role only). Migration `analytics.sql` **já aplicada**.
+  2. **Admin analytics:** `/admin/relatorios` exibe top 10 produtos clicados e pesquisas frequentes.
+  3. **SearchBar dropdown:** Busca ao vivo via `/api/search-suggestions` (Route Handler) com debounce 280ms. Exibe até 6 produtos (imagem, nome, categoria, preço). Navega para `/busca` apenas com Enter ou clique na lupa. Navegação por teclado (setas, Escape, Enter).
+  4. **PWA iOS:** `InstallPrompt.tsx` detecta iOS (`/iPhone|iPad|iPod/i`) e exibe banner com instruções "Compartilhar → Adicionar à Tela de Início" em vez do botão de install (iOS não suporta `beforeinstallprompt`).
+  5. **SW nt-v3:** Removido `caches.add("/")` do evento install — eliminava trava de rede que atrasava/impedia instalação no Android.
+- **Limitações conhecidas:**
+  - Ícone do PWA no Windows: Chrome cacheia o ícone na instalação. Instâncias já instaladas exigem desinstalar de `chrome://apps` e reinstalar. Não há correção de código para isso.
+  - iOS: instalação via Safari funciona, mas não há prompt automático — usuário precisa usar o menu Compartilhar manualmente.
+- **Arquivos criados:** `src/app/actions/analytics.ts`, `src/components/ui/ConsentBanner.tsx`, `src/components/ui/SearchTracker.tsx`, `src/contexts/ConsentContext.tsx`, `supabase/migrations/analytics.sql`, `src/app/api/search-suggestions/route.ts`.
+- **Arquivos modificados:** `src/components/ui/ProductCard.tsx`, `src/components/ui/SearchBar.tsx`, `src/components/ui/InstallPrompt.tsx`, `src/app/layout.tsx`, `src/app/admin/relatorios/page.tsx`, `src/app/busca/page.tsx`, `src/app/categoria/[slug]/page.tsx`, `src/app/categoria/[slug]/[subcategoria]/page.tsx`, `src/app/page.tsx`, `public/sw.js`.
 
 ### 2026-11-07 — Toggle bug fix + Maps embed + Feedback LGPD + preço faixa serviços
 
