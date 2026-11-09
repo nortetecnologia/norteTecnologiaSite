@@ -182,6 +182,7 @@ export default async function HomePage() {
                   {vitrine.products.map((p) => (
                     <ProductCard
                       key={p.id}
+                      id={p.id}
                       slug={p.slug}
                       name={p.name}
                       price={p.price}
@@ -206,6 +207,7 @@ export default async function HomePage() {
                 {fallbackProducts.map((p) => (
                   <ProductCard
                     key={p.id}
+                    id={p.id}
                     slug={p.slug}
                     name={p.name}
                     price={p.price}

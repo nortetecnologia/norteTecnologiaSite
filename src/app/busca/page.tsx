@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { ProductCard } from "@/components/ui/ProductCard";
+import { SearchTracker } from "@/components/ui/SearchTracker";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 
@@ -40,45 +41,52 @@ async function SearchResults({ query }: { query: string }) {
 
   if (rows.length === 0) {
     return (
-      <div className="text-center py-16">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={1.5}
-          stroke="currentColor"
-          className="mx-auto mb-4 h-12 w-12 text-gray-600"
-          aria-hidden="true"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-          />
-        </svg>
-        <p className="text-lg font-medium text-gray-300">Nenhum resultado para</p>
-        <p className="mt-1 text-brand-yellow font-semibold">&ldquo;{query}&rdquo;</p>
-        <p className="mt-3 text-sm text-gray-500">Tente outro termo ou navegue pelas categorias.</p>
-      </div>
+      <>
+        <SearchTracker query={query} resultsCount={0} />
+        <div className="text-center py-16">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+            stroke="currentColor"
+            className="mx-auto mb-4 h-12 w-12 text-gray-600"
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+            />
+          </svg>
+          <p className="text-lg font-medium text-gray-300">Nenhum resultado para</p>
+          <p className="mt-1 text-brand-yellow font-semibold">&ldquo;{query}&rdquo;</p>
+          <p className="mt-3 text-sm text-gray-500">Tente outro termo ou navegue pelas categorias.</p>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-      {rows.map((p) => {
-        const imgs = p.product_images ?? [];
-        const primaryImg = imgs.find((i) => i.is_primary)?.url ?? imgs[0]?.url ?? null;
-        return (
-          <ProductCard
-            key={p.id}
-            slug={p.slug}
-            name={p.name}
-            price={p.price}
-            primaryImageUrl={primaryImg}
-          />
-        );
-      })}
-    </div>
+    <>
+      <SearchTracker query={query} resultsCount={rows.length} />
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        {rows.map((p) => {
+          const imgs = p.product_images ?? [];
+          const primaryImg = imgs.find((i) => i.is_primary)?.url ?? imgs[0]?.url ?? null;
+          return (
+            <ProductCard
+              key={p.id}
+              id={p.id}
+              slug={p.slug}
+              name={p.name}
+              price={p.price}
+              primaryImageUrl={primaryImg}
+            />
+          );
+        })}
+      </div>
+    </>
   );
 }
 

@@ -1,18 +1,34 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { useTransition } from "react";
 import { formatCurrency } from "@/lib/utils";
+import { useConsent } from "@/contexts/ConsentContext";
+import { trackProductClick } from "@/app/actions/analytics";
 
 interface ProductCardProps {
+  id?: string;
   slug: string;
   name: string;
   price: number;
   primaryImageUrl: string | null;
 }
 
-export function ProductCard({ slug, name, price, primaryImageUrl }: ProductCardProps) {
+export function ProductCard({ id, slug, name, price, primaryImageUrl }: ProductCardProps) {
+  const { canTrack } = useConsent();
+  const [, startTransition] = useTransition();
+
+  function handleClick() {
+    if (canTrack && id) {
+      startTransition(() => trackProductClick(id, slug));
+    }
+  }
+
   return (
     <Link
       href={`/produto/${slug}`}
+      onClick={handleClick}
       className="group flex flex-col rounded-lg border border-brand-gray-mid bg-brand-gray-dark overflow-hidden hover:border-brand-yellow transition-colors"
     >
       <div className="relative aspect-square bg-brand-black overflow-hidden">

@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { CartProvider } from "@/contexts/CartContext";
+import { ConsentProvider } from "@/contexts/ConsentContext";
 import { InstallPrompt } from "@/components/ui/InstallPrompt";
+import { ConsentBanner } from "@/components/ui/ConsentBanner";
 import "./globals.css";
 
 const inter = Inter({
@@ -63,8 +65,11 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className={inter.variable}>
       <body>
-        <CartProvider>{children}</CartProvider>
-        <InstallPrompt />
+        <ConsentProvider>
+          <CartProvider>{children}</CartProvider>
+          <InstallPrompt />
+          <ConsentBanner />
+        </ConsentProvider>
       </body>
     </html>
   );
