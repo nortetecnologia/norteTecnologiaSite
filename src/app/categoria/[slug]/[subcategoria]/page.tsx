@@ -162,6 +162,7 @@ export default async function SubcategoryPage({ params }: PageProps) {
                 {products.map((p) => (
                   <ProductCard
                     key={p.id}
+                    id={p.id}
                     slug={p.slug}
                     name={p.name}
                     price={p.price}

@@ -41,6 +41,18 @@ interface NoImageProduct {
   category_name: string | null;
 }
 
+interface TopProduct {
+  product_slug: string;
+  product_name: string | null;
+  clicks: number;
+}
+
+interface TopSearch {
+  query: string;
+  searches: number;
+  avg_results: number;
+}
+
 export default async function AdminRelatoriosPage() {
   const supabase = createAdminClient();
 
@@ -51,6 +63,8 @@ export default async function AdminRelatoriosPage() {
     lowStockResult,
     noImageResult,
     reviewsResult,
+    topClicksResult,
+    topSearchesResult,
   ] = await Promise.all([
     supabase.from("products").select("id, is_active, stock"),
     supabase
@@ -79,6 +93,15 @@ export default async function AdminRelatoriosPage() {
       .select("id, name, rating, message, created_at, product:products(name, slug)")
       .order("created_at", { ascending: false })
       .limit(500),
+    supabase
+      .from("analytics_events")
+      .select("product_slug, product_id")
+      .eq("event_type", "product_click")
+      .limit(1000),
+    supabase
+      .from("search_queries")
+      .select("query, results_count")
+      .limit(1000),
   ]);
 
   // Summary counts
@@ -152,6 +175,40 @@ export default async function AdminRelatoriosPage() {
     grid: "Grade",
     row: "Linha",
   };
+
+  // Analytics: top clicked products
+  type RawClick = { product_slug: string; product_id: string | null };
+  const clickCounts = new Map<string, { slug: string; count: number }>();
+  for (const row of (topClicksResult.data ?? []) as unknown as RawClick[]) {
+    const key = row.product_slug;
+    const existing = clickCounts.get(key);
+    if (existing) existing.count++;
+    else clickCounts.set(key, { slug: key, count: 1 });
+  }
+  const topProducts: TopProduct[] = [...clickCounts.values()]
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10)
+    .map((v) => ({ product_slug: v.slug, product_name: null, clicks: v.count }));
+
+  // Analytics: top searches
+  type RawSearch = { query: string; results_count: number };
+  const searchCounts = new Map<string, { query: string; total: number; resultsSum: number }>();
+  for (const row of (topSearchesResult.data ?? []) as unknown as RawSearch[]) {
+    const key = row.query.toLowerCase().trim();
+    const existing = searchCounts.get(key);
+    if (existing) {
+      existing.total++;
+      existing.resultsSum += row.results_count;
+    } else {
+      searchCounts.set(key, { query: row.query, total: 1, resultsSum: row.results_count });
+    }
+  }
+  const topSearches: TopSearch[] = [...searchCounts.values()]
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 10)
+    .map((v) => ({ query: v.query, searches: v.total, avg_results: Math.round(v.resultsSum / v.total) }));
+
+  const hasAnalytics = topProducts.length > 0 || topSearches.length > 0;
 
   // Reviews
   type RawReview = { id: string; name: string | null; rating: number; message: string; created_at: string; product: { name: string; slug: string } | null };
@@ -397,13 +454,66 @@ export default async function AdminRelatoriosPage() {
       {/* Reviews */}
       <ReviewsSection reviews={reviewRows} />
 
-      {/* Notice about future metrics */}
-      <div className="bg-[#1a1a1a] border border-dashed border-[#2a2a2a] rounded-xl p-6 text-center">
-        <p className="text-[#4b5563] text-sm">
-          Métricas de comportamento do cliente (visualizações, pesquisas, cliques) serão adicionadas
-          conforme o sistema de eventos for implementado.
-        </p>
-      </div>
+      {/* Analytics */}
+      {hasAnalytics ? (
+        <div className="grid gap-6 lg:grid-cols-2">
+          {/* Top clicked products */}
+          {topProducts.length > 0 && (
+            <section className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-6">
+              <h2 className="text-white font-semibold mb-1">Produtos Mais Clicados</h2>
+              <p className="text-[#6b7280] text-xs mb-5">Baseado em cliques rastreados com consentimento.</p>
+              <div className="space-y-2">
+                {topProducts.map((p, i) => (
+                  <div key={p.product_slug} className="flex items-center gap-3">
+                    <span className="shrink-0 w-5 text-xs text-[#4b5563] text-right">{i + 1}.</span>
+                    <div className="flex-1 min-w-0">
+                      <Link
+                        href={`/produto/${p.product_slug}`}
+                        target="_blank"
+                        className="text-sm text-white hover:text-[#ffd600] transition-colors truncate block"
+                      >
+                        {p.product_slug}
+                      </Link>
+                    </div>
+                    <span className="shrink-0 text-xs font-semibold text-brand-yellow bg-brand-yellow/10 px-2 py-0.5 rounded-full">
+                      {p.clicks} clique{p.clicks !== 1 ? "s" : ""}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Top searches */}
+          {topSearches.length > 0 && (
+            <section className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-6">
+              <h2 className="text-white font-semibold mb-1">Pesquisas Mais Frequentes</h2>
+              <p className="text-[#6b7280] text-xs mb-5">Termos buscados por clientes que aceitaram rastreamento.</p>
+              <div className="space-y-2">
+                {topSearches.map((s, i) => (
+                  <div key={s.query} className="flex items-center gap-3">
+                    <span className="shrink-0 w-5 text-xs text-[#4b5563] text-right">{i + 1}.</span>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm text-white truncate block">&ldquo;{s.query}&rdquo;</span>
+                      <span className="text-xs text-[#6b7280]">~{s.avg_results} resultado{s.avg_results !== 1 ? "s" : ""}</span>
+                    </div>
+                    <span className="shrink-0 text-xs font-semibold text-blue-400 bg-blue-900/20 px-2 py-0.5 rounded-full">
+                      {s.searches}×
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
+      ) : (
+        <div className="bg-[#1a1a1a] border border-dashed border-[#2a2a2a] rounded-xl p-6 text-center">
+          <p className="text-[#4b5563] text-sm">
+            Nenhum dado de comportamento registrado ainda. Os dados aparecem aqui conforme clientes
+            aceitam o rastreamento de navegação.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
