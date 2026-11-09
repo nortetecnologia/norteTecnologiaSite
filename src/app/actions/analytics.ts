@@ -1,10 +1,13 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getClientIP, slidingWindow } from "@/lib/rateLimit";
 
 export async function trackProductClick(productId: string, productSlug: string): Promise<void> {
   if (!productId || !productSlug) return;
   try {
+    const ip = await getClientIP();
+    if (!slidingWindow(`analytics_click:${ip}`, 200, 60 * 60_000)) return;
     const supabase = createAdminClient();
     await supabase.from("analytics_events").insert({
       event_type: "product_click",
@@ -18,6 +21,8 @@ export async function trackSearch(query: string, resultsCount: number): Promise<
   const q = query?.trim();
   if (!q || q.length < 2) return;
   try {
+    const ip = await getClientIP();
+    if (!slidingWindow(`analytics_search:${ip}`, 60, 10 * 60_000)) return;
     const supabase = createAdminClient();
     await supabase.from("search_queries").insert({
       query: q.toLowerCase(),

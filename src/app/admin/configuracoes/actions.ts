@@ -66,13 +66,28 @@ export async function saveStoreSettings(
     return { error: "É necessário ao menos uma forma de pagamento." };
   }
 
+  const rawEmail = (formData.get("email") as string)?.trim() || null;
+  if (rawEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawEmail)) {
+    return { error: "Email de contato inválido." };
+  }
+
   const locationUrl = (formData.get("location_url") as string)?.trim() || null;
+  if (locationUrl) {
+    try {
+      const parsed = new URL(locationUrl);
+      if (!["http:", "https:"].includes(parsed.protocol)) {
+        return { error: "URL de localização deve começar com http:// ou https://." };
+      }
+    } catch {
+      return { error: "URL de localização inválida." };
+    }
+  }
 
   const payload = {
     store_name:
       (formData.get("store_name") as string)?.trim() || "Norte Tecnologia",
     whatsapp_number: whatsappDigits || null,
-    email: (formData.get("email") as string)?.trim() || null,
+    email: rawEmail,
     address: (formData.get("address") as string)?.trim() || null,
     city: (formData.get("city") as string)?.trim() || null,
     state_abbr: (formData.get("state_abbr") as string)?.trim() || "PA",

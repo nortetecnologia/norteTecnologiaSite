@@ -27,7 +27,7 @@ A aplicação deverá ser desenvolvida considerando a possibilidade de crescimen
 
 ## 2. Autenticação administrativa
 
-**Status:** Obrigatória na primeira versão.
+**Status:** ✅ Implementada. Supabase Auth via e-mail/senha. Middleware Next.js protege todas as rotas `/admin`. Verificação in-page adicionada como defesa em profundidade em 2026-11-09.
 
 A autenticação dos usuários administrativos será realizada pelo Supabase Auth, utilizando e-mail e senha.
 
@@ -96,7 +96,7 @@ A implementação deverá ser considerada obrigatória antes de ampliar a quanti
 
 ## 3. Rate limiting e proteção contra força bruta
 
-**Status:** Obrigatório na primeira versão.
+**Status:** ✅ Implementado (2026-11-09). Rate limiting sliding window em `src/lib/rateLimit.ts`. Login: 10 tentativas/15 min por IP. Ver seção 3.3 para limitação de instância única.
 
 O login administrativo será uma das principais superfícies de ataque da aplicação. Deverá existir proteção específica contra tentativas automatizadas de descoberta de senhas (brute force), abuso de requisições e ataques de credenciais.
 
@@ -148,6 +148,8 @@ Os limites deverão ser ajustados conforme o uso real, evitando bloqueios indevi
     
 
 ### 3.3. Armazenamento distribuído
+
+> **Situação atual (2026-11-09):** implementação usa `Map` em memória (`src/lib/rateLimit.ts`). Funciona corretamente em instância única. Em produção com múltiplas instâncias Vercel (Hobby plan usa uma instância), os contadores NÃO são compartilhados entre instâncias. Para escalar, substituir por Upstash Redis (`@upstash/ratelimit`). Vercel Firewall pode complementar na camada de rede.
 
 O rate limiting deverá funcionar corretamente na infraestrutura da Vercel.
 

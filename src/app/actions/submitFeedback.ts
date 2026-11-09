@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { getClientIP, slidingWindow } from "@/lib/rateLimit";
 
 export type FeedbackSubmitResult = { success?: boolean; error?: string };
 
@@ -14,6 +15,11 @@ export async function submitFeedback(
   }
   if (message.length > 2000) {
     return { error: "A mensagem não pode ultrapassar 2000 caracteres." };
+  }
+
+  const ip = await getClientIP();
+  if (!slidingWindow(`feedback:${ip}`, 3, 10 * 60_000)) {
+    return { error: "Muitas mensagens enviadas. Aguarde alguns minutos." };
   }
 
   const consent = formData.get("consent_given") === "on";

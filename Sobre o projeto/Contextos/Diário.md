@@ -8,9 +8,9 @@
 
 ## 1. Estado atual do projeto
 
-- **Estágio:** Admin completo + Páginas públicas completas + Carrinho + Checkout + Formas de pagamento configuráveis + Menu mobile funcional + Header redesenhado + Upload de imagens via Cloudinary + Drawer de categorias + Sistema de promoções + PromoBanner homepage + Busca pública + Cabeçalhos de segurança HTTP + Filtros is_active + PWA instalável (iOS + Android) + Fuso UTC-4 (Rorainópolis) + **Mapa configurável** + **Feedback LGPD** + **Preço faixa para serviços** + **Analytics LGPD (cliques + pesquisas)** + **SearchBar com dropdown ao vivo** + **Banner consentimento LGPD**.
-- **Última atividade:** 2026-11-09 — Analytics LGPD, SearchBar dropdown, PWA iOS, SW fix.
-- **Situação geral:** Deploy funcional na Vercel. Build limpo. Migration analytics.sql aplicada. **Migrations 011 e 012 ainda pendentes no Supabase.**
+- **Estágio:** Admin completo + Páginas públicas completas + Carrinho + Checkout + Formas de pagamento configuráveis + Menu mobile funcional + Header redesenhado + Upload de imagens via Cloudinary + Drawer de categorias + Sistema de promoções + PromoBanner homepage + Busca pública + Cabeçalhos de segurança HTTP (CSP incluído) + Filtros is_active + PWA instalável (iOS + Android) + Fuso UTC-4 (Rorainópolis) + **Mapa configurável** + **Feedback LGPD** + **Preço faixa para serviços** + **Analytics LGPD (cliques + pesquisas)** + **SearchBar com dropdown ao vivo** + **Banner consentimento LGPD** + **Auditoria de segurança completa**.
+- **Última atividade:** 2026-11-09 — Auditoria de segurança + hardening completo + documentação atualizada.
+- **Situação geral:** Deploy funcional na Vercel. Build limpo. Rate limiting, magic bytes, CSP, auth checks em todas as Server Actions. **Migrations 011 e 012 ainda pendentes no Supabase.**
 - **Próxima etapa:** Aplicar migrations 011 e 012. Configurar URL do Google Maps em Configurações.
 
 ---
@@ -18,13 +18,33 @@
 ## 2. Última atualização
 
 - **Data:** 2026-11-09
-- **Atividade:** Analytics LGPD (cliques/pesquisas) + SearchBar dropdown + PWA iOS instructions + SW sem trava de rede.
-- **Resultado:** Mergeado no main, deployado na Vercel. Migration analytics.sql aplicada no Supabase.
-- **Situação:** Branch `claude/norte-tecnologia-setup-f7c541`. Migrations 011 e 012 ainda pendentes.
+- **Atividade:** Auditoria de segurança completa + hardening + correção de funções incompletas + documentação atualizada.
+- **Resultado:** 14 arquivos modificados, 1 criado (`src/lib/rateLimit.ts`). Branch `claude/norte-tecnologia-setup-f7c541`.
+- **Situação:** Aguardando merge no main. Migrations 011 e 012 ainda pendentes no Supabase.
 
 ---
 
 ## 3. Implementações concluídas
+
+### 2026-11-09 — Auditoria de segurança + hardening
+
+- **Objetivo:** Corrigir todas as falhas de segurança identificadas antes de entrada em produção com fluxo de clientes.
+- **Implementação:**
+  1. **`src/lib/rateLimit.ts` (novo):** Rate limiter sliding window em memória. `getClientIP()` lê `x-forwarded-for`/`x-real-ip` via `await headers()`. `slidingWindow(key, max, windowMs)` retorna `false` quando limite excedido. Limpeza periódica (1 min) evita vazamento de memória.
+  2. **`deleteReview.ts` (CRÍTICO):** Adicionada verificação de autenticação antes de usar `createAdminClient()`. Qualquer pessoa podia deletar avaliações via Server Action diretamente.
+  3. **Uploads Cloudinary — produtos, categorias, promoções (ALTO):** Auth check + `isValidImageBytes()` que valida magic bytes dos formatos JPEG, PNG, WebP, GIF e AVIF. Impede upload de arquivos mascarados como imagens.
+  4. **`analytics.ts` (ALTO):** Rate limiting 200 cliques/h e 60 buscas/10 min por IP.
+  5. **`next.config.ts` (MÉDIO):** Adicionado header `Content-Security-Policy` com diretivas para Supabase, Cloudinary, Google Fonts e self.
+  6. **`configuracoes/actions.ts` (MÉDIO):** Validação de formato de e-mail (regex) e URL (`new URL()` verificando protocolo http/https).
+  7. **`submitReview.ts` e `submitFeedback.ts` (MÉDIO):** Rate limiting 3 por 10 min por IP.
+  8. **`search-suggestions/route.ts` (MÉDIO):** Rate limiting 60 req/min por IP, retorna HTTP 429.
+  9. **`admin/login/actions.ts` (MÉDIO):** Rate limiting 10 tentativas/15 min por IP.
+  10. **`admin/relatorios/page.tsx` (MÉDIO):** Verificação de autenticação in-page (defesa em profundidade) + removido `.limit(20)` em `noImageProducts` + `lowStockProducts` aumentado para 100.
+  11. **`checkout/CheckoutClient.tsx` (BAIXO):** `maxLength={500}` no textarea de observações.
+- **Arquivos criados:** `src/lib/rateLimit.ts`.
+- **Arquivos modificados:** `next.config.ts`, `src/app/actions/analytics.ts`, `src/app/actions/deleteReview.ts`, `src/app/actions/submitFeedback.ts`, `src/app/actions/submitReview.ts`, `src/app/admin/categorias/uploadAction.ts`, `src/app/admin/configuracoes/actions.ts`, `src/app/admin/login/actions.ts`, `src/app/admin/produtos/uploadAction.ts`, `src/app/admin/promocoes/uploadAction.ts`, `src/app/admin/relatorios/page.tsx`, `src/app/api/search-suggestions/route.ts`, `src/app/checkout/CheckoutClient.tsx`.
+- **Limitação conhecida:** Rate limiting em memória = por instância. Vercel Hobby usa instância única. Para escalar: Upstash Redis.
+- **Verificações:** TypeScript não reportou erros estruturais. Build não foi executado nesta sessão — verificar antes do deploy.
 
 ### 2026-11-09 — Analytics LGPD + SearchBar dropdown + PWA iOS + SW fix
 

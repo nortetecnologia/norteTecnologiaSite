@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ReviewsSection } from "./ReviewsSection";
 
@@ -54,6 +56,10 @@ interface TopSearch {
 }
 
 export default async function AdminRelatoriosPage() {
+  const anonClient = await createClient();
+  const { data: { user } } = await anonClient.auth.getUser();
+  if (!user) redirect("/admin/login");
+
   const supabase = createAdminClient();
 
   const [
@@ -81,13 +87,12 @@ export default async function AdminRelatoriosPage() {
       .eq("is_active", true)
       .lte("stock", 5)
       .order("stock", { ascending: true })
-      .limit(20),
+      .limit(100),
     supabase
       .from("products")
       .select("id, name, slug, category:categories(name), product_images(id)")
       .eq("is_active", true)
-      .order("name")
-      .limit(20),
+      .order("name"),
     supabase
       .from("product_reviews")
       .select("id, name, rating, message, created_at, product:products(name, slug)")

@@ -64,6 +64,7 @@ src/
 ├── lib/
 │   ├── supabase/           # Cliente Supabase e queries
 │   ├── cloudinary/         # Integração com Cloudinary
+│   ├── rateLimit.ts        # Rate limiter sliding window por IP
 │   └── utils.ts            # Funções utilitárias
 │
 └── types/
@@ -147,10 +148,46 @@ A documentação completa fica em [`Sobre o projeto/`](./Sobre%20o%20projeto/):
 
 ## Estado Atual
 
-> **Fase:** Estrutura inicial criada. Sem banco de dados nem autenticação configurados ainda.
+> **Fase:** Produção — plataforma completa, deployada e endurecida para segurança.
 
-A homepage exibe o layout base com identidade visual da marca, categorias e serviços como placeholders.
-As próximas etapas envolvem a integração com Supabase, criação do schema do banco e implementação do catálogo real.
+### Funcionalidades implementadas
+
+**Loja pública**
+- Catálogo completo de produtos e serviços com categorias, subcategorias e filtros `is_active`
+- Vitrines e PromoBanner configuráveis na homepage
+- Página individual de produto com galeria de imagens, variações e faixa de preço para serviços
+- Carrinho de compras com persistência (localStorage)
+- Checkout com encaminhamento automático para WhatsApp
+- Busca com dropdown ao vivo (SearchBar + `/api/search-suggestions`)
+- Avaliações de produtos com moderação no admin
+- Formulário de feedback com consentimento LGPD e admin de respostas
+
+**Painel administrativo (`/admin`)**
+- Gestão completa de produtos, serviços, categorias e vitrines
+- Controle de estoque com histórico de movimentações
+- Upload de imagens via Cloudinary (assinado, SHA-1, com timeout e validação de magic bytes)
+- Relatórios de analytics (cliques, pesquisas) e estoque
+- Configurações gerais da loja (WhatsApp, horários, mapa, formas de pagamento)
+
+**Infra e segurança**
+- Autenticação via Supabase Auth (admin apenas — sem cadastro público)
+- Middleware de proteção de rotas administrativas + verificação in-page (defesa em profundidade)
+- Rate limiting por IP: login (10/15 min), avaliações (3/10 min), feedback (3/10 min), busca (60/min), analytics (200 cliques/h + 60 buscas/10 min)
+- Validação de magic bytes em todos os uploads de imagem
+- Verificação de autenticação em todas as Server Actions sensíveis
+- Cabeçalhos de segurança HTTP: CSP, X-Frame-Options, HSTS, X-Content-Type-Options, Referrer-Policy, Permissions-Policy
+- Validação de URL e e-mail nas configurações da loja
+- LGPD: banner de consentimento + rastreamento de analytics somente após aceite
+
+**PWA**
+- Instalável no iOS (instruções nativas) e Android (beforeinstallprompt)
+- Service Worker `nt-v4` com cache offline
+- Ícones 192×192 e 512×512, manifest.json
+
+### Pendências conhecidas
+- Migrations `011` e `012` pendentes de aplicação no Supabase SQL Editor
+- Rate limiting em memória (por instância Vercel) — para produção com múltiplas instâncias, considerar Upstash Redis
+- Importação de XML para sincronização com CRM (planejado)
 
 ---
 

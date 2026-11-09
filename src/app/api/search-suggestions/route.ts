@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { slidingWindow } from "@/lib/rateLimit";
 
 export interface SearchSuggestion {
   id: string;
@@ -14,6 +15,15 @@ export interface SearchSuggestion {
 export async function GET(request: NextRequest) {
   const q = request.nextUrl.searchParams.get("q")?.trim() ?? "";
   if (q.length < 2) return NextResponse.json([]);
+
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    request.headers.get("x-real-ip") ??
+    "unknown";
+
+  if (!slidingWindow(`search:${ip}`, 60, 60_000)) {
+    return NextResponse.json([], { status: 429 });
+  }
 
   const supabase = await createClient();
   const { data } = await supabase

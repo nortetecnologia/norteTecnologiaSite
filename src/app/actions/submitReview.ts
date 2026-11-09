@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { getClientIP, slidingWindow } from "@/lib/rateLimit";
 
 export type ReviewSubmitResult = { success?: boolean; error?: string };
 
@@ -14,6 +15,11 @@ export async function submitReview(
   const message = (formData.get("message") as string)?.trim();
 
   if (!productId) return { error: "Produto não identificado." };
+
+  const ip = await getClientIP();
+  if (!slidingWindow(`review:${ip}`, 3, 10 * 60_000)) {
+    return { error: "Muitas avaliações enviadas. Aguarde alguns minutos." };
+  }
 
   const rating = parseInt(ratingRaw, 10);
   if (isNaN(rating) || rating < 1 || rating > 5) {

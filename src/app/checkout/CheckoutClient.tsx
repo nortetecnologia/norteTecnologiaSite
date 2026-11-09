@@ -288,6 +288,7 @@ export function CheckoutClient({ whatsappNumber, paymentMethods }: CheckoutClien
             value={observations}
             onChange={(e) => setObservations(e.target.value)}
             rows={3}
+            maxLength={500}
             placeholder="Alguma informação adicional para o pedido?"
             className="w-full resize-none rounded-md border border-brand-gray-mid bg-brand-black px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-brand-yellow focus:outline-none"
           />
