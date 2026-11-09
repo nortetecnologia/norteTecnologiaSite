@@ -1,4 +1,4 @@
-const CACHE = "nt-v3";
+const CACHE = "nt-v4";
 
 self.addEventListener("install", () => {
   // Skip waiting immediately — no blocking network request on install.
