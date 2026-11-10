@@ -22,6 +22,7 @@ const securityHeaders = [
       "img-src 'self' data: blob: https://res.cloudinary.com",
       "font-src 'self' https://fonts.gstatic.com",
       "connect-src 'self' https://*.supabase.co https://api.cloudinary.com",
+      "frame-src https://www.google.com https://maps.google.com",
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
