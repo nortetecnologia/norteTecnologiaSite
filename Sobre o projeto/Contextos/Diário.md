@@ -10,17 +10,16 @@
 
 - **Estágio:** Admin completo + Páginas públicas completas + Carrinho + Checkout + Formas de pagamento configuráveis + Menu mobile funcional + Header redesenhado + Upload de imagens via Cloudinary + Drawer de categorias + Sistema de promoções + PromoBanner homepage + Busca pública + Cabeçalhos de segurança HTTP + **CSP dinâmica no middleware** + Filtros is_active + PWA instalável (iOS + Android) + Fuso UTC-4 (Rorainópolis) + **Mapa configurável (Google Maps desbloqueado)** + **Feedback LGPD** + **Preço faixa para serviços** + **Analytics LGPD (cliques + pesquisas)** + **SearchBar com dropdown ao vivo** + **Banner consentimento LGPD** + **Auditoria de segurança completa**.
 - **Última atividade:** 2026-11-10 — CSP dinâmica no middleware + fix iframe Google Maps.
-- **Situação geral:** Deploy funcional na Vercel. Branch `main`. Rate limiting, magic bytes, CSP dinâmica (frame-src via store_settings), auth checks em todas as Server Actions. **Migrations 011 e 012 ainda pendentes no Supabase.**
-- **Próxima etapa:** Aplicar migrations 011 e 012. Configurar URL do Google Maps em Configurações.
+- **Situação geral:** Deploy funcional na Vercel. Branch `main`. Rate limiting, magic bytes, CSP dinâmica (frame-src via store_settings), auth checks em todas as Server Actions. Migrations 011 e 012 aplicadas no Supabase.
+- **Próxima etapa:** Configurar URL do Google Maps em `/admin/configuracoes` → campo Localização.
 
 ---
 
 ## 2. Última atualização
 
-- **Data:** 2026-11-10
-- **Atividade:** CSP movida de `next.config.ts` para `src/middleware.ts` com leitura dinâmica de `store_settings.location_url`; fix do iframe Google Maps (ERR_BLOCKED_BY_CSP).
-- **Commits:** `0ab99f1` (fix frame-src Google Maps), `e00dc91` (CSP dinâmica no middleware). Em produção no `main`.
-- **Situação:** Estável em produção. Migrations 011 e 012 ainda pendentes no Supabase.
+- **Data:** 2026-11-11
+- **Atividade:** Migrations 011 e 012 aplicadas no Supabase de produção.
+- **Situação:** Estável em produção. Todas as migrations aplicadas.
 
 ---
 
