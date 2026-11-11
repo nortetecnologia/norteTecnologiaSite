@@ -8,23 +8,38 @@
 
 ## 1. Estado atual do projeto
 
-- **Estágio:** Admin completo + Páginas públicas completas + Carrinho + Checkout + Formas de pagamento configuráveis + Menu mobile funcional + Header redesenhado + Upload de imagens via Cloudinary + Drawer de categorias + Sistema de promoções + PromoBanner homepage + Busca pública + Cabeçalhos de segurança HTTP (CSP incluído) + Filtros is_active + PWA instalável (iOS + Android) + Fuso UTC-4 (Rorainópolis) + **Mapa configurável** + **Feedback LGPD** + **Preço faixa para serviços** + **Analytics LGPD (cliques + pesquisas)** + **SearchBar com dropdown ao vivo** + **Banner consentimento LGPD** + **Auditoria de segurança completa**.
-- **Última atividade:** 2026-11-09 — Auditoria de segurança + hardening completo + documentação atualizada.
-- **Situação geral:** Deploy funcional na Vercel. Build limpo. Rate limiting, magic bytes, CSP, auth checks em todas as Server Actions. **Migrations 011 e 012 ainda pendentes no Supabase.**
+- **Estágio:** Admin completo + Páginas públicas completas + Carrinho + Checkout + Formas de pagamento configuráveis + Menu mobile funcional + Header redesenhado + Upload de imagens via Cloudinary + Drawer de categorias + Sistema de promoções + PromoBanner homepage + Busca pública + Cabeçalhos de segurança HTTP + **CSP dinâmica no middleware** + Filtros is_active + PWA instalável (iOS + Android) + Fuso UTC-4 (Rorainópolis) + **Mapa configurável (Google Maps desbloqueado)** + **Feedback LGPD** + **Preço faixa para serviços** + **Analytics LGPD (cliques + pesquisas)** + **SearchBar com dropdown ao vivo** + **Banner consentimento LGPD** + **Auditoria de segurança completa**.
+- **Última atividade:** 2026-11-10 — CSP dinâmica no middleware + fix iframe Google Maps.
+- **Situação geral:** Deploy funcional na Vercel. Branch `main`. Rate limiting, magic bytes, CSP dinâmica (frame-src via store_settings), auth checks em todas as Server Actions. **Migrations 011 e 012 ainda pendentes no Supabase.**
 - **Próxima etapa:** Aplicar migrations 011 e 012. Configurar URL do Google Maps em Configurações.
 
 ---
 
 ## 2. Última atualização
 
-- **Data:** 2026-11-09
-- **Atividade:** Auditoria de segurança completa + hardening + correção de funções incompletas + documentação atualizada.
-- **Resultado:** 14 arquivos modificados, 1 criado (`src/lib/rateLimit.ts`). Branch `claude/norte-tecnologia-setup-f7c541`.
-- **Situação:** Aguardando merge no main. Migrations 011 e 012 ainda pendentes no Supabase.
+- **Data:** 2026-11-10
+- **Atividade:** CSP movida de `next.config.ts` para `src/middleware.ts` com leitura dinâmica de `store_settings.location_url`; fix do iframe Google Maps (ERR_BLOCKED_BY_CSP).
+- **Commits:** `0ab99f1` (fix frame-src Google Maps), `e00dc91` (CSP dinâmica no middleware). Em produção no `main`.
+- **Situação:** Estável em produção. Migrations 011 e 012 ainda pendentes no Supabase.
 
 ---
 
 ## 3. Implementações concluídas
+
+### 2026-11-10 — CSP dinâmica no middleware + fix Google Maps
+
+- **Objetivo:** Desbloquear iframe do Google Maps (ERR_BLOCKED_BY_CSP) e tornar as URLs permitidas no CSP configuráveis dinamicamente pelo admin.
+- **Causa raiz:** A CSP estática em `next.config.ts` não incluía `frame-src`, bloqueando todos os iframes.
+- **Implementação:**
+  1. **`src/middleware.ts`** — CSP movida integralmente de `next.config.ts` para o middleware. Função `getFrameSrc()` lê `store_settings.location_url` via fetch direto à REST API do Supabase com cache de 60 s por instância Edge. Extrai hostname da URL configurada e inclui na diretiva `frame-src`. Fallback: `https://www.google.com https://maps.google.com` sempre permitidos.
+  2. **`next.config.ts`** — Entrada CSP removida (evitava conflito: `next.config.ts` sobrescreve headers do middleware no mesmo response).
+  3. **Matcher** — Expandido para cobrir todas as rotas (não só `/admin`), garantindo que a CSP seja enviada em toda resposta.
+- **Comportamento:** URLs de Google Maps adicionadas via `/admin/configuracoes` → campo Localização aparecem automaticamente na `frame-src` em até 60 s sem deploy.
+- **Commits:** `0ab99f1`, `e00dc91`. Mergeados no `main`.
+- **Arquivos modificados:** `src/middleware.ts`, `next.config.ts`.
+- **Limitação conhecida:** Cache do `frame-src` é por instância Edge (Vercel Hobby = instância única, sem impacto prático).
+
+---
 
 ### 2026-11-09 — Auditoria de segurança + hardening
 
