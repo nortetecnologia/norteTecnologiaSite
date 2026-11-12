@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { ProductCard } from "@/components/ui/ProductCard";
 import { SearchTracker } from "@/components/ui/SearchTracker";
+import { sanitizeSearchTerm } from "@/lib/utils";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 
@@ -10,7 +11,8 @@ interface Props {
 }
 
 async function SearchResults({ query }: { query: string }) {
-  if (!query || query.trim().length === 0) {
+  const safeQuery = sanitizeSearchTerm(query);
+  if (!safeQuery) {
     return (
       <div className="text-center py-16">
         <p className="text-gray-400">Digite algo para pesquisar produtos.</p>
@@ -22,7 +24,7 @@ async function SearchResults({ query }: { query: string }) {
   const { data: products } = await supabase
     .from("products")
     .select("id, name, slug, price, brand, product_images(url, is_primary)")
-    .or(`name.ilike.%${query}%,brand.ilike.%${query}%,description.ilike.%${query}%`)
+    .or(`name.ilike.%${safeQuery}%,brand.ilike.%${safeQuery}%,description.ilike.%${safeQuery}%`)
     .eq("is_active", true)
     .order("name", { ascending: true })
     .limit(60);

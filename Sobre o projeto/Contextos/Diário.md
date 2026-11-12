@@ -9,8 +9,8 @@
 ## 1. Estado atual do projeto
 
 - **Estágio:** Admin completo + Páginas públicas completas + Carrinho + Checkout + Formas de pagamento configuráveis + Menu mobile funcional + Header redesenhado + Upload de imagens via Cloudinary + Drawer de categorias + Sistema de promoções + PromoBanner homepage + Busca pública + Cabeçalhos de segurança HTTP + **CSP dinâmica no middleware** + Filtros is_active + PWA instalável (iOS + Android) + Fuso UTC-4 (Rorainópolis) + **Mapa configurável (Google Maps desbloqueado)** + **Feedback LGPD** + **Preço faixa para serviços** + **Analytics LGPD (cliques + pesquisas)** + **SearchBar com dropdown ao vivo** + **Banner consentimento LGPD** + **Auditoria de segurança completa**.
-- **Última atividade:** 2026-11-10 — CSP dinâmica no middleware + fix iframe Google Maps.
-- **Situação geral:** Deploy funcional na Vercel. Branch `main`. Rate limiting, magic bytes, CSP dinâmica (frame-src via store_settings), auth checks em todas as Server Actions. Migrations 011 e 012 aplicadas no Supabase.
+- **Última atividade:** 2026-11-11 — Auditoria de bugs/vulnerabilidades + fix de injeção de filtro na busca.
+- **Situação geral:** Deploy funcional na Vercel. Branch `main`. Rate limiting, magic bytes, CSP dinâmica (frame-src via store_settings), sanitização da busca, auth checks em todas as Server Actions. Migrations 011 e 012 aplicadas no Supabase.
 - **Próxima etapa:** Configurar URL do Google Maps em `/admin/configuracoes` → campo Localização.
 
 ---
@@ -18,12 +18,26 @@
 ## 2. Última atualização
 
 - **Data:** 2026-11-11
-- **Atividade:** Migrations 011 e 012 aplicadas no Supabase de produção.
-- **Situação:** Estável em produção. Todas as migrations aplicadas.
+- **Atividade:** Auditoria de bugs/vulnerabilidades — correção de injeção de filtro PostgREST na busca.
+- **Situação:** Estável em produção. tsc + lint + build OK. Todas as migrations aplicadas.
 
 ---
 
 ## 3. Implementações concluídas
+
+### 2026-11-11 — Correção: injeção de filtro PostgREST na busca
+
+- **Objetivo:** Fechar vetor de injeção de filtro na busca pública de produtos.
+- **Causa raiz:** O termo de busca do usuário era interpolado diretamente no `.or()` do PostgREST em dois pontos (`src/app/api/search-suggestions/route.ts` e `src/app/busca/page.tsx`). Como a vírgula separa condições e os parênteses agrupam na gramática de filtros, um termo como `x,is_active.eq.false` podia injetar condições arbitrárias na query (ex.: referenciar outras colunas, forçar matches amplos). O filtro `is_active = true` ANDado limitava o impacto, mas a superfície de injeção era real.
+- **Implementação:**
+  1. **`src/lib/utils.ts`** — Nova função `sanitizeSearchTerm()` que remove os caracteres significativos da gramática PostgREST (`,` `(` `)` `\` `*`), colapsa espaços e limita a 100 caracteres.
+  2. **`src/app/api/search-suggestions/route.ts`** — `q` sanitizado antes do `.or()`.
+  3. **`src/app/busca/page.tsx`** — `safeQuery` sanitizado para a query; o termo original ainda é exibido no cabeçalho (React escapa, sem XSS).
+- **Verificações:** `tsc --noEmit` OK, `next lint` sem erros novos (apenas 1 warning a11y pré-existente em SearchBar), `next build` OK (22 rotas).
+- **Demais verificações da auditoria (sem alterações necessárias):** auth + validação em todas as Server Actions admin; uploads com magic bytes + limite 10 MB + timeout; rate limiting em login/reviews/feedback/analytics/busca; páginas públicas filtram `is_active = true`; sem `dangerouslySetInnerHTML`/`eval` em todo o `src`; `CLOUDINARY_API_SECRET`/`SUPABASE_SECRET_KEY` restritos ao servidor; CSP dinâmica + headers de segurança no middleware.
+- **Arquivos modificados:** `src/lib/utils.ts`, `src/app/api/search-suggestions/route.ts`, `src/app/busca/page.tsx`.
+
+---
 
 ### 2026-11-10 — CSP dinâmica no middleware + fix Google Maps
 

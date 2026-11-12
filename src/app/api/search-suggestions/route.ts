@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { slidingWindow } from "@/lib/rateLimit";
+import { sanitizeSearchTerm } from "@/lib/utils";
 
 export interface SearchSuggestion {
   id: string;
@@ -13,7 +14,7 @@ export interface SearchSuggestion {
 }
 
 export async function GET(request: NextRequest) {
-  const q = request.nextUrl.searchParams.get("q")?.trim() ?? "";
+  const q = sanitizeSearchTerm(request.nextUrl.searchParams.get("q") ?? "");
   if (q.length < 2) return NextResponse.json([]);
 
   const ip =
