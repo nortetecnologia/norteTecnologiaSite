@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -9,6 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { AddToCartButton } from "@/components/ui/AddToCartButton";
 import { ReviewForm } from "@/components/ui/ReviewForm";
 import { ReviewsList } from "@/components/ui/ReviewsList";
+import { ProductGallery } from "@/components/ui/ProductGallery";
 import { Suspense } from "react";
 
 interface PageProps {
@@ -79,6 +79,7 @@ export default async function ProductPage({ params }: PageProps) {
   const primaryImage = sortedImages[0]?.url ?? null;
 
 
+
   return (
     <>
       <Header />
@@ -116,37 +117,8 @@ export default async function ProductPage({ params }: PageProps) {
         <section className="px-4 py-10 lg:px-8">
           <div className="mx-auto max-w-content">
             <div className="grid gap-10 lg:grid-cols-2">
-              {/* Image */}
-              <div className="relative aspect-square overflow-hidden rounded-lg bg-brand-black">
-                {primaryImage ? (
-                  <Image
-                    src={primaryImage}
-                    alt={product.name}
-                    fill
-                    unoptimized
-                    sizes="(max-width: 1024px) 100vw, 50vw"
-                    className="object-contain"
-                    priority
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center">
-                    <svg
-                      className="h-24 w-24 text-brand-gray-light"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1}
-                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
-                  </div>
-                )}
-              </div>
+              {/* Gallery */}
+              <ProductGallery images={sortedImages} name={product.name} />
 
               {/* Info */}
               <div className="flex flex-col">
@@ -197,29 +169,6 @@ export default async function ProductPage({ params }: PageProps) {
               </div>
             </div>
 
-            {/* Thumbnail gallery */}
-            {sortedImages.length > 1 && (
-              <div className="mt-8">
-                <h2 className="mb-4 text-sm font-medium text-gray-400">Mais fotos</h2>
-                <div className="flex flex-wrap gap-3">
-                  {sortedImages.map((img, i) => (
-                    <div
-                      key={i}
-                      className="relative h-20 w-20 overflow-hidden rounded-md border border-brand-gray-mid bg-brand-black"
-                    >
-                      <Image
-                        src={img.url}
-                        alt={`${product.name} foto ${i + 1}`}
-                        fill
-                        unoptimized
-                        sizes="80px"
-                        className="object-cover"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         </section>
 
