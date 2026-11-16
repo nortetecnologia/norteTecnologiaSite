@@ -8,6 +8,8 @@ export { DEFAULT_PAYMENT_METHODS };
 export interface StoreSettingsData {
   store_name: string;
   whatsapp_number: string | null;
+  phone_number: string | null;
+  cnpj: string | null;
   email: string | null;
   address: string | null;
   city: string | null;
@@ -20,6 +22,8 @@ export interface StoreSettingsData {
 const DEFAULT: StoreSettingsData = {
   store_name: "Norte Tecnologia",
   whatsapp_number: null,
+  phone_number: null,
+  cnpj: null,
   email: null,
   address: null,
   city: null,
@@ -36,7 +40,7 @@ export const getStoreSettings = cache(async (): Promise<StoreSettingsData> => {
     const { data, error } = await supabase
       .from("store_settings")
       .select(
-        "store_name, whatsapp_number, email, address, city, state_abbr, business_hours_schedule, payment_methods, location_url"
+        "store_name, whatsapp_number, phone_number, cnpj, email, address, city, state_abbr, business_hours_schedule, payment_methods, location_url"
       )
       .single();
 
@@ -47,6 +51,8 @@ export const getStoreSettings = cache(async (): Promise<StoreSettingsData> => {
       result.payment_methods = DEFAULT_PAYMENT_METHODS;
     }
     if (result.location_url === undefined) result.location_url = null;
+    if (result.phone_number === undefined) result.phone_number = null;
+    if (result.cnpj === undefined) result.cnpj = null;
     return result;
   } catch {
     return DEFAULT;

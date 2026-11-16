@@ -84,6 +84,21 @@ export function ConfiguracoesForm({ initialData }: Props) {
               className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg px-4 py-2.5 text-white text-sm placeholder-[#4b5563] focus:outline-none focus:border-[#ffd600] focus:ring-1 focus:ring-[#ffd600] transition-colors"
             />
           </div>
+          <div className="sm:col-span-2">
+            <label htmlFor="cnpj" className="block text-sm font-medium text-[#d1d5db] mb-1.5">
+              CNPJ
+            </label>
+            <input
+              id="cnpj"
+              name="cnpj"
+              type="text"
+              inputMode="numeric"
+              defaultValue={initialData.cnpj ?? ""}
+              placeholder="00.000.000/0000-00"
+              className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg px-4 py-2.5 text-white text-sm placeholder-[#4b5563] focus:outline-none focus:border-[#ffd600] focus:ring-1 focus:ring-[#ffd600] transition-colors"
+            />
+            <p className="mt-1.5 text-xs text-[#6b7280]">14 dígitos. Pode usar máscara ou só números.</p>
+          </div>
           <div>
             <label htmlFor="address" className="block text-sm font-medium text-[#d1d5db] mb-1.5">
               Endereço
@@ -137,6 +152,22 @@ export function ConfiguracoesForm({ initialData }: Props) {
           </svg>
           WhatsApp e Contato
         </h2>
+        <div className="mb-5">
+          <label htmlFor="phone_number" className="block text-sm font-medium text-[#d1d5db] mb-1.5">
+            Telefone fixo / comercial
+          </label>
+          <input
+            id="phone_number"
+            name="phone_number"
+            type="tel"
+            defaultValue={initialData.phone_number ?? ""}
+            placeholder="(95) 3333-0000"
+            className="w-full bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg px-4 py-2.5 text-white text-sm placeholder-[#4b5563] focus:outline-none focus:border-[#ffd600] focus:ring-1 focus:ring-[#ffd600] transition-colors"
+          />
+          <p className="mt-1.5 text-xs text-[#6b7280]">
+            Telefone de ligação, separado do WhatsApp. Exibido no rodapé do site.
+          </p>
+        </div>
         <div>
           <label htmlFor="whatsapp_number" className="block text-sm font-medium text-[#d1d5db] mb-1.5">
             Número do WhatsApp

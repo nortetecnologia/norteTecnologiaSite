@@ -4,11 +4,18 @@ import { getStoreSettings, buildWhatsAppUrl } from "@/lib/store-settings";
 import { isStoreOpen } from "@/lib/business-hours";
 import { createClient } from "@/lib/supabase/server";
 
+function formatCnpj(raw: string): string {
+  const d = raw.replace(/\D/g, "");
+  if (d.length !== 14) return raw;
+  return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8, 12)}-${d.slice(12)}`;
+}
+
 export default async function Footer() {
   const settings = await getStoreSettings();
   const whatsappUrl = buildWhatsAppUrl(settings.whatsapp_number);
   const storeOpen = isStoreOpen(settings.business_hours_schedule);
   const currentYear = new Date().getFullYear();
+  const phoneDigits = settings.phone_number?.replace(/\D/g, "") ?? "";
 
   let footerCategories: { name: string; slug: string }[] = [];
   let footerServices: { name: string; slug: string }[] = [];
@@ -130,6 +137,19 @@ export default async function Footer() {
                   </a>
                 </li>
               )}
+              {settings.phone_number && (
+                <li>
+                  <a
+                    href={`tel:${phoneDigits}`}
+                    className="flex items-center gap-2 text-sm text-gray-400 transition-colors hover:text-brand-yellow"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0 text-brand-yellow" aria-hidden="true">
+                      <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.67A2 2 0 012 .84h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z" />
+                    </svg>
+                    {settings.phone_number}
+                  </a>
+                </li>
+              )}
               <li>
                 <a
                   href={whatsappUrl}
@@ -173,6 +193,12 @@ export default async function Footer() {
         <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-brand-gray-mid pt-8 sm:flex-row">
           <p className="text-xs text-gray-500">
             © {currentYear} Norte Tecnologia. Todos os direitos reservados.
+            {settings.cnpj && (
+              <>
+                {" "}
+                <span className="text-gray-600">·</span> CNPJ {formatCnpj(settings.cnpj)}
+              </>
+            )}
           </p>
           <div className="flex gap-4">
             <Link

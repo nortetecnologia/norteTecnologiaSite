@@ -9,7 +9,7 @@
 ## 1. Estado atual do projeto
 
 - **Estágio:** Admin completo + Páginas públicas completas + Carrinho + Checkout + Formas de pagamento configuráveis + Menu mobile funcional + Header redesenhado + Upload de imagens via Cloudinary + Drawer de categorias + Sistema de promoções + PromoBanner homepage + Busca pública + Cabeçalhos de segurança HTTP + **CSP dinâmica no middleware** + Filtros is_active + PWA instalável (iOS + Android) + Fuso UTC-4 (Rorainópolis) + **Mapa configurável (Google Maps desbloqueado)** + **Feedback LGPD** + **Preço faixa para serviços** + **Analytics LGPD (cliques + pesquisas)** + **SearchBar com dropdown ao vivo** + **Banner consentimento LGPD** + **Auditoria de segurança completa**.
-- **Última atividade:** 2026-11-11 — Auditoria de bugs/vulnerabilidades + fix de injeção de filtro na busca.
+- **Última atividade:** 2026-11-16 — Paridade com o ERP Program: CNPJ + telefone fixo nas configurações e sincronização de formas de pagamento.
 - **Situação geral:** Deploy funcional na Vercel. Branch `main`. Rate limiting, magic bytes, CSP dinâmica (frame-src via store_settings), sanitização da busca, auth checks em todas as Server Actions. Migrations 011 e 012 aplicadas no Supabase.
 - **Próxima etapa:** Configurar URL do Google Maps em `/admin/configuracoes` → campo Localização.
 
@@ -17,13 +17,28 @@
 
 ## 2. Última atualização
 
-- **Data:** 2026-11-11
-- **Atividade:** Auditoria de bugs/vulnerabilidades — correção de injeção de filtro PostgREST na busca.
-- **Situação:** Estável em produção. tsc + lint + build OK. Todas as migrations aplicadas.
+- **Data:** 2026-11-16
+- **Atividade:** Alinhamento com o ERP Program (app Electron) — campos `cnpj` e `phone_number` de `store_settings` e sincronização da tabela `payment_methods`.
+- **Situação:** Estável. tsc + build OK. Colunas `cnpj`/`phone_number` e tabela `payment_methods` já existem no Supabase (criadas pelas migrations do ERP).
 
 ---
 
 ## 3. Implementações concluídas
+
+### 2026-11-16 — Paridade com o ERP Program: CNPJ, telefone fixo e sync de pagamentos
+
+- **Objetivo:** Trazer para o site as informações/funções de `store_settings` que o ERP Program (app desktop Electron, desenvolvido por bifurcação separada) já gravava no banco compartilhado, sem importar nada exclusivo do ERP (clientes, OS, PDV, estoque, funcionários, backup/offline).
+- **Contexto:** O ERP Program adicionou ao banco compartilhado, via migrations próprias (`erp_007_store_phone.sql`, `erp_008_store_cnpj.sql`, `erp_005_payment_methods.sql`), as colunas `store_settings.phone_number` e `store_settings.cnpj` e a tabela relacional `payment_methods(name, label, is_active, position)`. O site ignorava esses campos.
+- **Implementação (apenas no site):**
+  1. **`src/lib/store-settings.ts`** — `StoreSettingsData` ganhou `cnpj` e `phone_number`; `select` e `DEFAULT` atualizados; fallback para coluna ausente (undefined → null).
+  2. **`src/app/admin/configuracoes/actions.ts`** — valida e persiste `cnpj` (14 dígitos quando preenchido) e `phone_number` (≥ 8 dígitos). Nova função `syncPaymentMethods()`: best-effort, espelha `store_settings.payment_methods` (fonte de verdade do site) na tabela `payment_methods` — marca tudo `is_active=false` e faz upsert por `name` (slug do label), **sem deletar** (respeita a FK `erp_pdv_sale_payments.method → payment_methods(name)` com `ON DELETE RESTRICT`). Dedupe por `name` evita conflito de upsert.
+  3. **`src/app/admin/configuracoes/ConfiguracoesForm.tsx`** — campos CNPJ (em "Informações da Loja") e Telefone fixo (em "WhatsApp e Contato").
+  4. **`src/components/layout/Footer.tsx`** — telefone como link `tel:` na seção Contato e CNPJ formatado na barra inferior.
+- **Decisões:** `store_settings.payment_methods` (array de labels) permanece a fonte de verdade do site; a tabela `payment_methods` é sincronizada apenas para o ERP não ficar defasado quando o admin edita pagamentos pelo site. A sincronização é não-fatal: se falhar, o salvamento do `store_settings` não é afetado.
+- **Verificações:** `tsc --noEmit` OK, `next build` OK (22 rotas). UI do admin não testada ao vivo (exige Supabase + login autenticado).
+- **Arquivos modificados:** `src/lib/store-settings.ts`, `src/app/admin/configuracoes/actions.ts`, `src/app/admin/configuracoes/ConfiguracoesForm.tsx`, `src/components/layout/Footer.tsx`.
+
+---
 
 ### 2026-11-11 — Correção: injeção de filtro PostgREST na busca
 
