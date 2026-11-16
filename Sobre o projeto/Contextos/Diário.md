@@ -18,12 +18,25 @@
 ## 2. Última atualização
 
 - **Data:** 2026-11-16
-- **Atividade:** Alinhamento com o ERP Program (app Electron) — campos `cnpj` e `phone_number` de `store_settings` e sincronização da tabela `payment_methods`.
-- **Situação:** Estável. tsc + build OK. Colunas `cnpj`/`phone_number` e tabela `payment_methods` já existem no Supabase (criadas pelas migrations do ERP).
+- **Atividade:** Remoção do campo "Código Interno" (`internal_code`) do admin de produtos, acompanhando o ERP Program que também o removeu.
+- **Situação:** Estável. tsc + build OK. Coluna `products.internal_code` mantida no banco (órfã/nullable), apenas removida da UI/lógica do site.
 
 ---
 
 ## 3. Implementações concluídas
+
+### 2026-11-16 — Remoção do Código Interno dos produtos
+
+- **Objetivo:** Acompanhar o ERP Program, que deixou de usar `internal_code` no cadastro de produtos.
+- **Implementação (apenas no site):**
+  1. **`src/app/admin/produtos/ProdutosClient.tsx`** — removido o campo "Código Interno" do form, o estado `formInternalCode`, a exibição na lista e o campo da interface `ProductData`. O bloco de códigos ficou só com "Código de Barras" (apenas produto).
+  2. **`src/app/admin/produtos/actions.ts`** — removida a leitura e a gravação de `internal_code` em create/update.
+  3. **`src/app/admin/produtos/page.tsx`** — removido do `select`, da interface `ProductRow` e do mapeamento.
+- **Decisão:** A coluna `products.internal_code` **não foi dropada** (banco compartilhado; fica órfã/nullable, sem impacto).
+- **Verificações:** `tsc --noEmit` OK, `next build` OK (22 rotas).
+- **Arquivos modificados:** `src/app/admin/produtos/ProdutosClient.tsx`, `src/app/admin/produtos/actions.ts`, `src/app/admin/produtos/page.tsx`.
+
+---
 
 ### 2026-11-16 — Paridade com o ERP Program: CNPJ, telefone fixo e sync de pagamentos
 

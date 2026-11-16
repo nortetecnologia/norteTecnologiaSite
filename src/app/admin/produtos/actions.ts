@@ -61,7 +61,6 @@ export async function createProduct(
     const rawType = (formData.get("product_type") as string) || "product";
     const productType = rawType === "service" ? "service" : "product";
     const barcode = productType === "product" ? ((formData.get("barcode") as string)?.trim() || null) : null;
-    const internalCode = (formData.get("internal_code") as string)?.trim() || null;
 
     const priceMaxRaw = (formData.get("price_max") as string)?.replace(",", ".");
     const priceMax = productType === "service" && priceMaxRaw ? parseFloat(priceMaxRaw) : null;
@@ -90,7 +89,6 @@ export async function createProduct(
         brand,
         sku: sku || null,
         barcode,
-        internal_code: internalCode,
         price,
         price_max: priceMax,
         stock: stockRaw,
@@ -156,7 +154,6 @@ export async function updateProduct(
     const rawType = (formData.get("product_type") as string) || "product";
     const productType = rawType === "service" ? "service" : "product";
     const barcode = productType === "product" ? ((formData.get("barcode") as string)?.trim() || null) : null;
-    const internalCode = (formData.get("internal_code") as string)?.trim() || null;
 
     const priceMaxRawU = (formData.get("price_max") as string)?.replace(",", ".");
     const priceMaxU = productType === "service" && priceMaxRawU ? parseFloat(priceMaxRawU) : null;
@@ -172,7 +169,6 @@ export async function updateProduct(
         brand,
         sku: sku || null,
         barcode,
-        internal_code: internalCode,
         price,
         price_max: priceMaxU,
         stock: stockRaw,
